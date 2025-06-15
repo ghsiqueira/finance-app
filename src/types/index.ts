@@ -50,15 +50,14 @@ export interface Budget {
   id: string;
   name: string;
   amount: number;
+  spent: number; // Mudança aqui: era currentSpent, agora é spent
   categoryId: string;
   category?: Category;
   period: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   startDate: string;
   endDate: string;
-  currentSpent: number;
   alertThreshold: number;
   autoRenew: boolean;
-  status: 'active' | 'expired' | 'future';
   userId: string;
   isActive: boolean;
   createdAt: string;

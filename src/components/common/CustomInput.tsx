@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface CustomInputProps extends TextInputProps {
   label: string;
   error?: string;
+  helperText?: string;
   isPassword?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   containerStyle?: object;
@@ -20,6 +21,7 @@ interface CustomInputProps extends TextInputProps {
 export const CustomInput: React.FC<CustomInputProps> = ({
   label,
   error,
+  helperText,
   isPassword = false,
   icon,
   containerStyle,
@@ -66,6 +68,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
         )}
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
+      {helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
     </View>
   );
 };
@@ -119,6 +122,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     color: '#ef4444',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6b7280',
     marginTop: 4,
     marginLeft: 4,
   },

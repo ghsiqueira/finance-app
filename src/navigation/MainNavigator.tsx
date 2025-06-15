@@ -10,6 +10,8 @@ import { CreateTransactionScreen } from '../screens/main/CreateTransactionScreen
 import { CategoriesScreen } from '../screens/main/CategoriesScreen';
 import { CreateCategoryScreen } from '../screens/main/CreateCategoryScreen';
 import { EditCategoryScreen } from '../screens/main/EditCategoryScreen';
+import { BudgetsScreen } from '../screens/main/BudgetsScreen';
+import { CreateBudgetScreen } from '../screens/main/CreateBudgetScreen';
 
 // Telas temporárias até criarmos as reais
 const TempScreen = ({ title }: { title: string }) => (
@@ -38,7 +40,6 @@ const tempStyles = StyleSheet.create({
   },
 });
 
-const BudgetsScreen = () => <TempScreen title="Orçamentos" />;
 const GoalsScreen = () => <TempScreen title="Metas" />;
 const ProfileScreen = () => <TempScreen title="Perfil" />;
 
@@ -164,6 +165,11 @@ export const MainNavigator: React.FC = () => {
       <Stack.Screen 
         name="EditCategory" 
         component={EditCategoryScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <Stack.Screen 
+        name="CreateBudget" 
+        component={CreateBudgetScreen}
         options={{ presentation: 'modal' }}
       />
     </Stack.Navigator>
