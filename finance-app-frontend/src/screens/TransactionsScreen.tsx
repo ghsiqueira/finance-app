@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import TransactionFiltersModal from '../components/TransactionFiltersModal';
 import FilterChips from '../components/FilterChips';
 import FilterStats from '../components/FilterStats';
+import ExportModal from '../components/ExportModal';
 
 interface Filters {
   type: 'all' | 'income' | 'expense';
@@ -42,6 +43,7 @@ export default function TransactionsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     type: 'all',
@@ -324,7 +326,6 @@ export default function TransactionsScreen({ navigation }: any) {
               <Text style={[styles.transactionDescription, { color: colors.text }]} numberOfLines={1}>
                 {item.description}
               </Text>
-              {/* ✅ BADGES */}
               <View style={styles.badges}>
                 {item.isRecurring && (
                   <View style={[styles.badge, { backgroundColor: colors.info + '20' }]}>
@@ -412,7 +413,6 @@ export default function TransactionsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ BARRA DE BUSCA E FILTROS */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchBox, { backgroundColor: colors.card }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} />
@@ -430,7 +430,13 @@ export default function TransactionsScreen({ navigation }: any) {
           )}
         </View>
 
-        {/* ✅ BOTÃO DE FILTROS */}
+        <TouchableOpacity
+          style={[styles.filterButton, { backgroundColor: colors.card }]}
+          onPress={() => setExportModalVisible(true)}
+        >
+          <Ionicons name="download-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[
             styles.filterButton,
@@ -453,7 +459,6 @@ export default function TransactionsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ CHIPS DE FILTROS ATIVOS */}
       {getActiveFiltersCount() > 0 && (
         <FilterChips
           filters={filters}
@@ -462,12 +467,10 @@ export default function TransactionsScreen({ navigation }: any) {
         />
       )}
 
-      {/* ✅ ESTATÍSTICAS DOS RESULTADOS */}
       {filteredTransactions.length > 0 && getActiveFiltersCount() > 0 && (
         <FilterStats transactions={filteredTransactions} />
       )}
 
-      {/* ✅ RESUMO DOS FILTROS ATIVOS */}
       {getActiveFiltersCount() > 0 && (
         <View style={[styles.activeFilters, { backgroundColor: colors.card }]}>
           <Text style={[styles.activeFiltersText, { color: colors.textSecondary }]}>
@@ -499,7 +502,6 @@ export default function TransactionsScreen({ navigation }: any) {
         </View>
       )}
 
-      {/* LISTA */}
       {sections.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="receipt-outline" size={64} color={colors.textSecondary} />
@@ -536,13 +538,18 @@ export default function TransactionsScreen({ navigation }: any) {
         />
       )}
 
-      {/* ✅ MODAL DE FILTROS */}
       <TransactionFiltersModal
         visible={showFiltersModal}
         onClose={() => setShowFiltersModal(false)}
         onApply={handleApplyFilters}
         categories={categories}
         currentFilters={filters}
+      />
+
+      <ExportModal
+        visible={exportModalVisible}
+        onClose={() => setExportModalVisible(false)}
+        filters={filters}
       />
     </View>
   );

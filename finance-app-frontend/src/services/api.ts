@@ -132,3 +132,9 @@ export const dashboardAPI = {
   getRecentTransactions: (params?: any) => api.get('/transactions', { params }),
   getGoalsProgress: () => api.get('/goals'),
 };
+
+export const exportAPI = {
+  exportCSV: (params?: any) => api.get('/export/csv', { params, responseType: 'blob' }),
+  exportExcel: (params?: any) => api.get('/export/excel', { params, responseType: 'blob' }),
+  exportPDF: (params?: any) => api.get('/export/pdf', { params, responseType: 'blob' }),
+};
