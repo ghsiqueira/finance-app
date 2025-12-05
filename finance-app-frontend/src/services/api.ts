@@ -138,3 +138,7 @@ export const exportAPI = {
   exportExcel: (params?: any) => api.get('/export/excel', { params, responseType: 'blob' }),
   exportPDF: (params?: any) => api.get('/export/pdf', { params, responseType: 'blob' }),
 };
+
+export const insightsAPI = {
+  getSummary: () => api.get('/insights/summary'),
+};

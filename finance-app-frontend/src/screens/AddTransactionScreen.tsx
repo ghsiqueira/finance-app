@@ -72,13 +72,19 @@ export default function AddTransactionScreen({ route, navigation }: any) {
 
     try {
       setLoading(true);
-      await transactionAPI.create({
+      const transactionData: any = {
         description: description.trim(),
         amount: parsedAmount,
         type,
         date: date.toISOString(),
-        categoryId: categoryId || undefined,
-      });
+      };
+
+      if (categoryId) {
+        transactionData.categoryId = categoryId;
+      }
+
+      await transactionAPI.create(transactionData);
+
       Alert.alert('Sucesso', 'Transação criada!', [
         {
           text: 'OK',

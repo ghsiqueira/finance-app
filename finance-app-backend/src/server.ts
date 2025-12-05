@@ -11,6 +11,7 @@ import currencyRoutes from './routes/currency.js';
 import dashboardRoutes from './routes/dashboard.js';
 import reportRoutes from './routes/reports.js';
 import exportRoutes from './routes/export.js';  
+import insightsRoutes from './routes/insights.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/currency', currencyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/export', exportRoutes);  
+app.use('/api/insights', insightsRoutes);
 
 const PORT = process.env.PORT || 3000;
 

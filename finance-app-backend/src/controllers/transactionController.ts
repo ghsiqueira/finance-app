@@ -25,7 +25,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       receipt 
     } = req.body;
     
-    if (!amount || !description || !type || !categoryId) {
+    if (!amount || !description || !type) {
       return res.status(400).json({ 
         message: 'Campos obrigatórios: amount, description, type, categoryId' 
       });
@@ -37,15 +37,17 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const category = await Category.findOne({ 
-      _id: categoryId, 
-      userId: req.userId 
-    });
-
-    if (!category) {
-      return res.status(404).json({ 
-        message: 'Categoria não encontrada' 
+    if (categoryId) {
+      const category = await Category.findOne({ 
+        _id: categoryId, 
+        userId: req.userId 
       });
+
+      if (!category) {
+        return res.status(404).json({ 
+          message: 'Categoria não encontrada' 
+        });
+      }
     }
 
     if (budgetId) {

@@ -13,12 +13,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, insightsAPI } from '../services/api';
 import MonthlySummaryCard from '../components/MonthlySummaryCard';
 import CategoryPieChart from '../components/CategoryPieChart';
 import GoalsCarousel from '../components/GoalsCarousel';
 import AlertsSection from '../components/AlertsSection';
 import QuickActions from '../components/QuickActions';
+import InsightsSection from '../components/InsightsSection';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen({ navigation }: any) {
@@ -28,11 +29,15 @@ export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [insights, setInsights] = useState<any[]>([]);
 
   const loadDashboard = async () => {
     try {
       const response = await dashboardAPI.getSummary();
       setDashboardData(response.data);
+      
+      const insightsRes = await insightsAPI.getSummary();
+      setInsights(insightsRes.data.insights || []);
     } catch (error) {
       console.error('Error loading dashboard:', error);
       Alert.alert('Erro', 'Falha ao carregar dashboard');
@@ -150,6 +155,11 @@ export default function HomeScreen({ navigation }: any) {
         {/* AÇÕES RÁPIDAS */}
         <QuickActions />
 
+        {/* INSIGHTS */}
+        {insights.length > 0 && (
+          <InsightsSection insights={insights} />
+        )}
+
         {/* ALERTAS */}
         {dashboardData && (
           <AlertsSection
@@ -164,8 +174,15 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={[styles.cardTitle, { color: colors.text }]}>📊 Estatísticas</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: '#007AFF15' }]}>
-                  <Ionicons name="swap-horizontal" size={20} color="#007AFF" />
+                <View style={[
+                  styles.statIconContainer, 
+                  { backgroundColor: colorScheme === 'dark' ? '#5E9FFF20' : '#007AFF15' }
+                ]}>
+                  <Ionicons 
+                    name="swap-horizontal" 
+                    size={20} 
+                    color={colorScheme === 'dark' ? '#5E9FFF' : '#007AFF'} 
+                  />
                 </View>
                 <Text style={[styles.statValue, { color: colors.text }]}>
                   {dashboardData.stats.totalTransactions}
@@ -175,8 +192,15 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
               </View>
               <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: '#34C75915' }]}>
-                  <Ionicons name="flag" size={20} color="#34C759" />
+                <View style={[
+                  styles.statIconContainer, 
+                  { backgroundColor: colorScheme === 'dark' ? '#5DD97C20' : '#34C75915' }
+                ]}>
+                  <Ionicons 
+                    name="flag" 
+                    size={20} 
+                    color={colorScheme === 'dark' ? '#5DD97C' : '#34C759'} 
+                  />
                 </View>
                 <Text style={[styles.statValue, { color: colors.text }]}>
                   {dashboardData.stats.activeGoals}
@@ -186,8 +210,15 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
               </View>
               <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: '#FF950015' }]}>
-                  <Ionicons name="wallet" size={20} color="#FF9500" />
+                <View style={[
+                  styles.statIconContainer, 
+                  { backgroundColor: colorScheme === 'dark' ? '#FFB34020' : '#FF950015' }
+                ]}>
+                  <Ionicons 
+                    name="wallet" 
+                    size={20} 
+                    color={colorScheme === 'dark' ? '#FFB340' : '#FF9500'} 
+                  />
                 </View>
                 <Text style={[styles.statValue, { color: colors.text }]}>
                   {dashboardData.stats.activeBudgets}
@@ -241,7 +272,7 @@ export default function HomeScreen({ navigation }: any) {
                     <View
                       style={[
                         styles.transactionIcon,
-                        { backgroundColor: (transaction.categoryId?.color || '#999') + '15' }
+                        { backgroundColor: (transaction.categoryId?.color || '#999') + '20' }
                       ]}
                     >
                       <Ionicons
@@ -262,7 +293,10 @@ export default function HomeScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.transactionAmount,
-                      { color: transaction.type === 'income' ? '#34C759' : '#FF3B30' }
+                      { color: transaction.type === 'income' 
+                        ? (colorScheme === 'dark' ? '#5DD97C' : '#34C759')
+                        : (colorScheme === 'dark' ? '#FF6961' : '#FF3B30')
+                      }
                     ]}
                   >
                     {transaction.type === 'income' ? '+' : ''}
@@ -362,7 +396,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#007AFF20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
