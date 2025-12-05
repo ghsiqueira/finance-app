@@ -47,8 +47,9 @@ const ROLES = [
 export default function EditGoalScreen({ route, navigation }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
-  const { goal: initialGoal } = route.params;
-  const [goal, setGoal] = useState(initialGoal);
+  const { goal: initialGoal, goalId } = route.params;
+  const [goal, setGoal] = useState(initialGoal || null);
+  const [initialLoading, setInitialLoading] = useState(!initialGoal);
   const [loading, setLoading] = useState(false);
   const [progressAmount, setProgressAmount] = useState('');
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -81,16 +82,24 @@ export default function EditGoalScreen({ route, navigation }: any) {
     loadCategories();
   }, []);
 
-  const loadGoal = async () => {
+  const loadGoal = async (id?: string) => {
     try {
-      const response = await goalAPI.getById(goal._id);
-      setGoal(response.data);
-      setEditName(response.data.name);
-      setEditTargetAmount(response.data.targetAmount.toString());
-      setEditDeadline(new Date(response.data.deadline));
-      setEditCategoryId(response.data.categoryId?._id || response.data.categoryId || '');
+      const goalIdToLoad = id || goal?._id;
+      if (!goalIdToLoad) return;
+      
+      const response = await goalAPI.getById(goalIdToLoad);
+      const loadedGoal = response.data;
+      
+      setGoal(loadedGoal);
+      setEditName(loadedGoal.name);
+      setEditTargetAmount(loadedGoal.targetAmount.toString());
+      setEditDeadline(new Date(loadedGoal.deadline));
+      setEditCategoryId(loadedGoal.categoryId?._id || loadedGoal.categoryId || '');
+      setInitialLoading(false);
     } catch (error) {
       console.error('Error loading goal:', error);
+      Alert.alert('Erro', 'Falha ao carregar meta');
+      navigation.goBack();
     }
   };
 

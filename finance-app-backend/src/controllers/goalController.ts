@@ -66,12 +66,14 @@ export const getGoals = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const ownGoals = await Goal.find({ userId: req.userId }).populate('categoryId');
-    
+    const ownGoals = await Goal.find({ userId: req.userId })
+      .populate('categoryId')
+
     const sharedGoals = await Goal.find({
       'members.userId': req.userId,
       userId: { $ne: req.userId } 
-    }).populate('categoryId');
+    })
+    .populate('categoryId')
 
     const allGoals = [...ownGoals, ...sharedGoals].sort((a, b) => {
       return b._id.toString().localeCompare(a._id.toString());
@@ -109,7 +111,8 @@ export const getGoal = async (req: AuthRequest, res: Response) => {
         { userId: req.userId },
         { 'members.userId': req.userId }
       ]
-    }).populate('categoryId');
+    })
+    .populate('categoryId')
 
     if (!goal) {
       console.log('GET GOAL - Not found or no access');
@@ -339,6 +342,7 @@ export const shareGoal = async (req: AuthRequest, res: Response) => {
 
     console.log('Saving goal...');
     await goal.save();
+    await goal.populate('categoryId');
     console.log('Goal saved successfully');
 
     res.json({ 

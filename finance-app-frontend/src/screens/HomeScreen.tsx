@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,6 +24,7 @@ import { useFocusEffect } from '@react-navigation/native';
 export default function HomeScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -30,9 +32,6 @@ export default function HomeScreen({ navigation }: any) {
   const loadDashboard = async () => {
     try {
       const response = await dashboardAPI.getSummary();
-      console.log('=== DASHBOARD DATA ===');
-      console.log('Top Categories:', response.data.topCategories);
-      console.log('Month Summary:', response.data.monthSummary);
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -56,9 +55,9 @@ export default function HomeScreen({ navigation }: any) {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '🌅 Bom dia';
-    if (hour < 18) return '☀️ Boa tarde';
-    return '🌙 Boa noite';
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
   };
 
   const formatCurrency = (value: number) => {
@@ -73,28 +72,26 @@ export default function HomeScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
               {getGreeting()}
             </Text>
             <Text style={[styles.userName, { color: colors.text }]}>
-              {user?.name?.split(' ')[0] || 'Usuário'}!
+              {user?.name?.split(' ')[0] || 'Usuário'}
             </Text>
           </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.background }]}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <Ionicons name="settings-outline" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.settingsButton, { backgroundColor: colors.card }]}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={22} color={colors.text} />
+          </TouchableOpacity>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Carregando dashboard...
+            Carregando...
           </Text>
         </View>
       </View>
@@ -104,23 +101,21 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* HEADER */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={styles.header}>
         <View>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>
             {getGreeting()}
           </Text>
           <Text style={[styles.userName, { color: colors.text }]}>
-            {user?.name?.split(' ')[0] || 'Usuário'}!
+            {user?.name?.split(' ')[0] || 'Usuário'}
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.background }]}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Ionicons name="settings-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.settingsButton, { backgroundColor: colors.card }]}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Ionicons name="settings-outline" size={22} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* CONTENT */}
@@ -139,7 +134,7 @@ export default function HomeScreen({ navigation }: any) {
       >
         {/* RESUMO MENSAL */}
         {dashboardData?.monthSummary && (
-          <View style={styles.section}> 
+          <View style={styles.section}>
             <MonthlySummaryCard
               income={dashboardData.monthSummary.income}
               expenses={dashboardData.monthSummary.expenses}
@@ -152,16 +147,8 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* GRÁFICO DE CATEGORIAS */}
-        {dashboardData?.topCategories && (
-          <View style={styles.section}>
-            <CategoryPieChart 
-              categories={dashboardData.topCategories}
-              allCategories={dashboardData.allCategories}
-              totalExpenses={dashboardData.monthSummary.expenses}
-            />
-          </View>
-        )}
+        {/* AÇÕES RÁPIDAS */}
+        <QuickActions />
 
         {/* ALERTAS */}
         {dashboardData && (
@@ -171,48 +158,99 @@ export default function HomeScreen({ navigation }: any) {
           />
         )}
 
+        {/* ESTATÍSTICAS */}
+        {dashboardData?.stats && (
+          <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>📊 Estatísticas</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: '#007AFF15' }]}>
+                  <Ionicons name="swap-horizontal" size={20} color="#007AFF" />
+                </View>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {dashboardData.stats.totalTransactions}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Transações
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: '#34C75915' }]}>
+                  <Ionicons name="flag" size={20} color="#34C759" />
+                </View>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {dashboardData.stats.activeGoals}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Metas
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: '#FF950015' }]}>
+                  <Ionicons name="wallet" size={20} color="#FF9500" />
+                </View>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {dashboardData.stats.activeBudgets}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Orçamentos
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* GRÁFICO DE CATEGORIAS */}
+        {dashboardData?.topCategories && dashboardData.topCategories.length > 0 && (
+          <View style={styles.section}>
+            <CategoryPieChart
+              categories={dashboardData.topCategories}
+              allCategories={dashboardData.allCategories}
+              totalExpenses={dashboardData.monthSummary.expenses}
+            />
+          </View>
+        )}
+
         {/* METAS */}
-        {dashboardData?.goalsProgress && (
+        {dashboardData?.goalsProgress && dashboardData.goalsProgress.length > 0 && (
           <GoalsCarousel goals={dashboardData.goalsProgress} />
         )}
 
         {/* TRANSAÇÕES RECENTES */}
         {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>📋 Transações Recentes</Text>
+          <View style={[styles.transactionsCard, { backgroundColor: colors.card }]}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>💳 Recentes</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
-                <Text style={[styles.seeAllText, { color: colors.primary }]}>Ver todas →</Text>
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>Ver todas</Text>
               </TouchableOpacity>
             </View>
-            <View style={[styles.transactionsCard, { backgroundColor: colors.card }]}>
+            <View style={styles.transactionsList}>
               {dashboardData.recentTransactions.slice(0, 5).map((transaction: any, index: number) => (
                 <TouchableOpacity
                   key={transaction._id}
                   style={[
                     styles.transactionItem,
-                    index < 4 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.border
-                    }
+                    index < 4 && styles.transactionItemBorder,
+                    { borderBottomColor: colors.border }
                   ]}
                   onPress={() => navigation.navigate('TransactionDetails', { transactionId: transaction._id })}
-                  activeOpacity={0.7}
+                  activeOpacity={0.6}
                 >
                   <View style={styles.transactionLeft}>
                     <View
                       style={[
                         styles.transactionIcon,
-                        { backgroundColor: (transaction.categoryId?.color || '#999999') + '20' }
+                        { backgroundColor: (transaction.categoryId?.color || '#999') + '15' }
                       ]}
                     >
                       <Ionicons
                         name={(transaction.categoryId?.icon || 'help-circle') as any}
-                        size={24}
-                        color={transaction.categoryId?.color || '#999999'}
+                        size={22}
+                        color={transaction.categoryId?.color || '#999'}
                       />
                     </View>
-                    <View style={styles.transactionInfoContainer}>
+                    <View style={styles.transactionInfo}>
                       <Text style={[styles.transactionDescription, { color: colors.text }]} numberOfLines={1}>
                         {transaction.description}
                       </Text>
@@ -221,55 +259,22 @@ export default function HomeScreen({ navigation }: any) {
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.transactionRightContainer}>
-                    <Text
-                      style={[
-                        styles.transactionAmount,
-                        { color: transaction.type === 'income' ? colors.success : colors.error }
-                      ]}
-                    >
-                      {transaction.type === 'income' ? '+' : '-'}
-                      {formatCurrency(transaction.amount)}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  </View>
+                  <Text
+                    style={[
+                      styles.transactionAmount,
+                      { color: transaction.type === 'income' ? '#34C759' : '#FF3B30' }
+                    ]}
+                  >
+                    {transaction.type === 'income' ? '+' : ''}
+                    {formatCurrency(transaction.amount)}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
 
-        {/* AÇÕES RÁPIDAS */}
-        <QuickActions />
-
-        {/* ESTATÍSTICAS RÁPIDAS */}
-        {dashboardData?.stats && (
-          <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.statsTitle, { color: colors.text }]}>📊 Estatísticas</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>
-                  {dashboardData.stats.totalTransactions}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Transações</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.success }]}>
-                  {dashboardData.stats.activeGoals}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Metas Ativas</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.warning }]}>
-                  {dashboardData.stats.activeBudgets}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Orçamentos</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        <View style={{ height: 40 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
@@ -285,27 +290,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
+    paddingBottom: 16,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     marginBottom: 4,
   },
   userName: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -315,40 +322,92 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 8,
   },
   section: {
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  sectionHeader: {
+  statsCard: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#007AFF20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  transactionsCard: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    marginBottom: 16,
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
   },
-  transactionsCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
+  transactionsList: {
+    gap: 0,
   },
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 12,
+  },
+  transactionItemBorder: {
+    borderBottomWidth: 1,
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -356,57 +415,28 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
-  transactionInfoContainer: {
-    flex: 1,
-  },
-  transactionRightContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   transactionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  transactionInfo: {
+    flex: 1,
+  },
   transactionDescription: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 2,
   },
   transactionCategory: {
     fontSize: 13,
+    fontWeight: '500',
   },
   transactionAmount: {
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  statsCard: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-  },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });

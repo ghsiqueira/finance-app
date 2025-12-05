@@ -128,7 +128,7 @@ export const reportAPI = {
 };
 
 export const dashboardAPI = {
-  getSummary: (params?: any) => api.get('/reports/summary', { params }),
+  getSummary: (params?: any) => api.get('/dashboard/summary', { params }), 
   getRecentTransactions: (params?: any) => api.get('/transactions', { params }),
   getGoalsProgress: () => api.get('/goals'),
 };

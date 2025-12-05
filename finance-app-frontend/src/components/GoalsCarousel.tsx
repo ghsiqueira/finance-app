@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +25,7 @@ interface GoalsCarouselProps {
 export default function GoalsCarousel({ goals }: GoalsCarouselProps) {
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const colorScheme = useColorScheme();
   const screenWidth = Dimensions.get('window').width;
 
   const formatCurrency = (value: number) => {
@@ -36,17 +37,33 @@ export default function GoalsCarousel({ goals }: GoalsCarouselProps) {
     }).format(value);
   };
 
+  const adjustColorForDarkMode = (color: string) => {
+    if (colorScheme !== 'dark') return color;
+    
+    const colorMap: { [key: string]: string } = {
+      '#007AFF': '#5E9FFF',
+      '#34C759': '#5DD97C',
+      '#FF9500': '#FFB340',
+      '#AF52DE': '#C77DFF',
+      '#FF3B30': '#FF6961',
+      '#5856D6': '#8E8BF7',
+      '#FF2D55': '#FF6B8A',
+      '#FFCC00': '#FFD84D',
+    };
+
+    return colorMap[color.toUpperCase()] || color;
+  };
+
+  const successColor = colorScheme === 'dark' ? '#5DD97C' : '#34C759';
+  const primaryColor = colorScheme === 'dark' ? '#5E9FFF' : '#007AFF';
+  const errorColor = colorScheme === 'dark' ? '#FF6961' : '#FF3B30';
+
   if (goals.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.card }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>🎯 Suas Metas</Text>
-          <TouchableOpacity onPress={() => (navigation as any).navigate('Goals')}>
-            <Text style={[styles.seeAllText, { color: colors.primary }]}>Ver todas →</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.title, { color: colors.text }]}>🎯 Suas Metas</Text>
         <View style={styles.emptyContainer}>
-          <Ionicons name="flag-outline" size={64} color={colors.textSecondary} />
+          <Ionicons name="flag-outline" size={48} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             Você ainda não tem metas
           </Text>
@@ -62,11 +79,11 @@ export default function GoalsCarousel({ goals }: GoalsCarouselProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>🎯 Suas Metas</Text>
         <TouchableOpacity onPress={() => (navigation as any).navigate('Goals')}>
-          <Text style={[styles.seeAllText, { color: colors.primary }]}>Ver todas →</Text>
+          <Text style={[styles.seeAllText, { color: primaryColor }]}>Ver todas</Text>
         </TouchableOpacity>
       </View>
 
@@ -74,82 +91,105 @@ export default function GoalsCarousel({ goals }: GoalsCarouselProps) {
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        snapToInterval={screenWidth - 60}
+        snapToInterval={screenWidth - 80}
         decelerationRate="fast"
       >
-        {goals.map((goal, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.goalCard, { backgroundColor: colors.card }]}
-            onPress={() => (navigation as any).navigate('EditGoal', { goalId: goal.goalId })}
-            activeOpacity={0.7}
-          >
-            {/* Header do Card */}
-            <View style={styles.goalHeader}>
-              <View style={[styles.iconCircle, { backgroundColor: goal.categoryColor + '20' }]}>
-                <Ionicons name={goal.categoryIcon as any} size={28} color={goal.categoryColor} />
-              </View>
-              {goal.isShared && (
-                <View style={[styles.sharedBadge, { backgroundColor: colors.info }]}>
-                  <Ionicons name="people" size={12} color="#fff" />
-                  <Text style={styles.sharedBadgeText}>{goal.membersCount}</Text>
+        {goals.map((goal, index) => {
+          const adjustedColor = adjustColorForDarkMode(goal.categoryColor);
+          
+          return (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.goalCard, 
+                { 
+                  backgroundColor: adjustedColor,
+                  borderWidth: 1.5,
+                  borderColor: adjustedColor,
+                }
+              ]}
+              onPress={() => (navigation as any).navigate('EditGoal', { goal: goal })}
+              activeOpacity={0.7}
+            >
+              {/* Header do Card */}
+              <View style={styles.goalHeader}>
+                <View style={[
+                  styles.iconCircle, 
+                  { backgroundColor: 'rgba(255, 255, 255, 0.25)' }
+                ]}>
+                  <Ionicons name={goal.categoryIcon as any} size={26} color="#FFFFFF" />
                 </View>
-              )}
-            </View>
+                {goal.isShared && (
+                  <View style={[
+                    styles.sharedBadge, 
+                    { backgroundColor: 'rgba(255, 255, 255, 0.25)' }
+                  ]}>
+                    <Ionicons name="people" size={12} color="#FFFFFF" />
+                    <Text style={[styles.sharedBadgeText, { color: '#FFFFFF' }]}>
+                      {goal.membersCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-            {/* Nome da Meta */}
-            <Text style={[styles.goalName, { color: colors.text }]} numberOfLines={2}>
-              {goal.name}
-            </Text>
-
-            {/* Valores */}
-            <View style={styles.valuesRow}>
-              <Text style={[styles.currentAmount, { color: colors.success }]}>
-                {formatCurrency(goal.currentAmount)}
+              {/* Nome da Meta */}
+              <Text style={[styles.goalName, { color: '#FFFFFF' }]} numberOfLines={2}>
+                {goal.name}
               </Text>
-              <Text style={[styles.targetAmount, { color: colors.textSecondary }]}>
-                / {formatCurrency(goal.targetAmount)}
-              </Text>
-            </View>
 
-            {/* Barra de Progresso */}
-            <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { 
-                    backgroundColor: goal.categoryColor,
-                    width: `${Math.min(goal.percentage, 100)}%`
-                  }
-                ]} 
-              />
-            </View>
+              {/* Valores */}
+              <View style={styles.amountRow}>
+                <Text style={[styles.currentAmount, { color: '#FFFFFF' }]}>
+                  {formatCurrency(goal.currentAmount)}
+                </Text>
+                <Text style={[styles.targetAmount, { color: 'rgba(255, 255, 255, 0.8)' }]}>
+                  de {formatCurrency(goal.targetAmount)}
+                </Text>
+              </View>
 
-            {/* Informações Adicionais */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Progresso</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>
-                  {goal.percentage.toFixed(0)}%
-                </Text>
+              {/* Barra de Progresso */}
+              <View style={[
+                styles.progressBar, 
+                { backgroundColor: 'rgba(255, 255, 255, 0.25)' }
+              ]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(goal.percentage, 100)}%`,
+                      backgroundColor: '#FFFFFF'
+                    }
+                  ]}
+                />
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <View style={styles.infoItem}>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Faltam</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>
-                  {formatCurrency(goal.remaining)}
-                </Text>
+
+              {/* Footer */}
+              <View style={styles.footer}>
+                <View style={styles.footerItem}>
+                  <Ionicons name="trending-up" size={14} color="#FFFFFF" />
+                  <Text style={[styles.footerText, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+                    {goal.percentage.toFixed(0)}%
+                  </Text>
+                </View>
+                <View style={styles.footerItem}>
+                  <Ionicons 
+                    name="time-outline" 
+                    size={14} 
+                    color={goal.daysLeft < 0 ? '#FFE5E5' : '#FFFFFF'} 
+                  />
+                  <Text 
+                    style={[
+                      styles.footerText, 
+                      { color: goal.daysLeft < 0 ? '#FFE5E5' : 'rgba(255, 255, 255, 0.9)' }
+                    ]}
+                  >
+                    {goal.daysLeft > 0 ? `${goal.daysLeft} dias` : 'Atrasada'}
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <View style={styles.infoItem}>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Prazo</Text>
-                <Text style={[styles.infoValue, { color: goal.daysLeft < 30 ? colors.error : colors.text }]}>
-                  {goal.daysLeft}d
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -157,47 +197,54 @@ export default function GoalsCarousel({ goals }: GoalsCarouselProps) {
 
 const styles = StyleSheet.create({
   container: {
+    marginHorizontal: 20,
     marginBottom: 16,
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingRight: 20,
   },
   goalCard: {
-    width: Dimensions.get('window').width - 80,
-    borderRadius: 16,
-    padding: 20,
+    width: Dimensions.get('window').width - 96,
+    marginRight: 12,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3,
+    elevation: 2,
   },
   goalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -207,79 +254,74 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   sharedBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
   },
   goalName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+    lineHeight: 20,
   },
-  valuesRow: {
+  amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    gap: 6,
     marginBottom: 12,
   },
   currentAmount: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   targetAmount: {
-    fontSize: 16,
-    marginLeft: 4,
+    fontSize: 13,
+    fontWeight: '500',
   },
   progressBar: {
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   progressFill: {
     height: '100%',
     borderRadius: 4,
   },
-  infoRow: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  infoItem: {
-    flex: 1,
+  footerItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  infoLabel: {
+  footerText: {
     fontSize: 12,
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  divider: {
-    width: 1,
-    height: 32,
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 32,
   },
   emptyText: {
     fontSize: 14,
+    fontWeight: '500',
     marginTop: 12,
     marginBottom: 16,
   },
   createButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 12,
   },
   createButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });

@@ -197,8 +197,10 @@ export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
       const daysLeft = Math.ceil((new Date(goal.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
       return {
+        _id: goal._id,
         goalId: goal._id,
         name: goal.name,
+        categoryId: goal.categoryId,
         categoryIcon: (goal.categoryId as any)?.icon || 'flag',
         categoryColor: (goal.categoryId as any)?.color || '#4ECDC4',
         targetAmount: goal.targetAmount,
@@ -208,7 +210,12 @@ export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
         deadline: goal.deadline,
         daysLeft: daysLeft,
         isShared: goal.isShared,
-        membersCount: goal.members?.length || 0
+        autoSplit: goal.autoSplit,
+        members: goal.members, 
+        membersCount: goal.members?.length || 0,
+        userId: goal.userId,
+        isCompleted: goal.isCompleted,
+        progressHistory: goal.progressHistory || []
       };
     });
 

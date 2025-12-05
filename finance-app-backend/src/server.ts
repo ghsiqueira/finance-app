@@ -9,6 +9,7 @@ import budgetRoutes from './routes/budgets.js';
 import goalRoutes from './routes/goals.js';
 import currencyRoutes from './routes/currency.js';
 import dashboardRoutes from './routes/dashboard.js';
+import reportRoutes from './routes/reports.js';  
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/currency', currencyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportRoutes);  
 
 const PORT = process.env.PORT || 3000;
 
