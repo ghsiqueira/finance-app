@@ -25,9 +25,11 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       receipt 
     } = req.body;
     
+    console.log('📝 Criando transação:', { description, isRecurring, recurringConfig });
+    
     if (!amount || !description || !type) {
       return res.status(400).json({ 
-        message: 'Campos obrigatórios: amount, description, type, categoryId' 
+        message: 'Campos obrigatórios: amount, description, type' 
       });
     }
 
@@ -62,17 +64,15 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
         });
       }
 
-      if (budget.categoryId.toString() !== categoryId.toString()) {
+      if (categoryId && budget.categoryId.toString() !== categoryId.toString()) {
         return res.status(400).json({ 
           message: 'Orçamento não corresponde à categoria selecionada' 
         });
       }
     }
     
-    const transaction = new Transaction({
+    const transactionData: any = {
       userId: req.userId,
-      categoryId,
-      budgetId,
       type,
       amount,
       originalAmount: originalAmount || amount,
@@ -80,12 +80,32 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       description,
       date: date || new Date(),
       isRecurring: isRecurring || false,
-      recurringConfig,
       location,
       receipt
+    };
+
+    if (categoryId) {
+      transactionData.categoryId = categoryId;
+    }
+
+    if (budgetId) {
+      transactionData.budgetId = budgetId;
+    }
+
+    if (recurringConfig && recurringConfig.frequency) {
+      transactionData.recurringConfig = recurringConfig;
+      console.log('✅ Salvando com recurringConfig:', recurringConfig);
+    }
+
+    const transaction = new Transaction(transactionData);
+    await transaction.save();
+    
+    console.log('✅ Transação salva:', { 
+      id: transaction._id, 
+      isRecurring: transaction.isRecurring,
+      hasConfig: !!transaction.recurringConfig 
     });
 
-    await transaction.save();
     const populatedTransaction = await Transaction.findById(transaction._id)
       .populate('categoryId')
       .populate('budgetId');

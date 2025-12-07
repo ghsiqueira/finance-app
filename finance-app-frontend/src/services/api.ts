@@ -142,3 +142,24 @@ export const exportAPI = {
 export const insightsAPI = {
   getSummary: () => api.get('/insights/summary'),
 };
+
+export const recurrenceAPI = {
+  getAll: () => api.get('/recurrence'),
+  pause: (id: string) => api.patch(`/recurrence/${id}/pause`),
+  resume: (id: string) => api.patch(`/recurrence/${id}/resume`),
+  delete: (id: string, deleteFuture?: boolean) => {
+    const params = deleteFuture ? { deleteFuture: true } : {};
+    return api.delete(`/recurrence/${id}`, { params });
+  },
+  generate: () => api.post('/recurrence/generate'),
+  addToTransaction: (id: string, config: { 
+    frequency: string; 
+    dayOfMonth?: number; 
+    isBusinessDay?: boolean 
+  }) => api.patch(`/recurrence/${id}/add`, config),
+  editRecurrence: (id: string, config: { 
+    frequency: string; 
+    dayOfMonth?: number; 
+    isBusinessDay?: boolean 
+  }) => api.patch(`/recurrence/${id}/edit`, config),
+};

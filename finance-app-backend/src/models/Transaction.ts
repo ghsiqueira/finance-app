@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITransaction extends Document {
   userId: string;
-  categoryId: string;
+  categoryId?: string;
   budgetId?: string;
   type: 'expense' | 'income' | 'transfer';
   amount: number;
@@ -112,10 +112,6 @@ TransactionSchema.pre('save', function(next) {
   
   if (!this.currency) {
     this.currency = 'BRL';
-  }
-
-  if (this.recurringConfig && this.recurringConfig.frequency) {
-    this.isRecurring = true;
   }
 });
 

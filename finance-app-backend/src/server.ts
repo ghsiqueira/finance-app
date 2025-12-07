@@ -12,6 +12,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import reportRoutes from './routes/reports.js';
 import exportRoutes from './routes/export.js';  
 import insightsRoutes from './routes/insights.js';
+import recurrenceRoutes from './routes/recurrence.js';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/export', exportRoutes);  
 app.use('/api/insights', insightsRoutes);
+app.use('/api/recurrence', recurrenceRoutes);
 
 const PORT = process.env.PORT || 3000;
 

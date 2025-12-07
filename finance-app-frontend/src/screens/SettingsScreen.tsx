@@ -126,7 +126,7 @@ export default function SettingsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* NOVA SEÇÃO: PERSONALIZAÇÃO */}
+      {/* SEÇÃO: PERSONALIZAÇÃO */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PERSONALIZAÇÃO</Text>
         
@@ -135,13 +135,32 @@ export default function SettingsScreen({ navigation }: any) {
           onPress={() => navigation.navigate('CategoryManagement')}
         >
           <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: '#9B59B6' + '20' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: '#9B59B620' }]}>
               <Ionicons name="pricetags" size={24} color="#9B59B6" />
             </View>
             <View>
               <Text style={[styles.settingLabel, { color: colors.text }]}>Gerenciar Categorias</Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                 Crie e edite suas categorias
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* 🆕 TRANSAÇÕES RECORRENTES */}
+        <TouchableOpacity
+          style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
+          onPress={() => navigation.navigate('RecurringTransactions')}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#C77DFF20' }]}>
+              <Ionicons name="repeat" size={24} color="#C77DFF" />
+            </View>
+            <View>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Transações Recorrentes</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Automatize pagamentos mensais
               </Text>
             </View>
           </View>

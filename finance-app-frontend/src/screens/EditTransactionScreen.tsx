@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { transactionAPI, categoryAPI } from '../services/api';
+import { transactionAPI, categoryAPI, recurrenceAPI } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import RecurrenceConfigModal from '../components/RecurrenceConfigModal';
 
 export default function EditTransactionScreen({ route, navigation }: any) {
   const { colors } = useTheme();
@@ -30,6 +31,10 @@ export default function EditTransactionScreen({ route, navigation }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
+  const [hasRecurrence, setHasRecurrence] = useState(!!transaction?.recurringConfig?.frequency);
+  const [recurringConfig, setRecurringConfig] = useState(transaction?.recurringConfig || null);
 
   useEffect(() => {
     if (!transaction) {
@@ -67,6 +72,56 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     }
   };
 
+  const handleEditRecurrence = async (frequency: string, dayOfMonth?: number) => {
+    try {
+      await recurrenceAPI.editRecurrence(transaction._id, {
+        frequency,
+        dayOfMonth,
+        isBusinessDay: false,
+      });
+      
+      setRecurringConfig({
+        frequency,
+        dayOfMonth,
+        isBusinessDay: false,
+      });
+      
+      setShowRecurrenceModal(false);
+      Alert.alert('Sucesso', 'Recorrência atualizada!');
+    } catch (error) {
+      console.error('❌ Erro ao editar recorrência:', error);
+      Alert.alert('Erro', 'Falha ao editar recorrência');
+    }
+  };
+
+  const handleRemoveRecurrence = () => {
+    Alert.alert(
+      'Remover Recorrência',
+      'Tem certeza que deseja remover a recorrência desta transação?\n\nA transação será mantida, mas não será mais gerada automaticamente.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await recurrenceAPI.delete(transaction._id, false);
+              setHasRecurrence(false);
+              setRecurringConfig(null);
+              Alert.alert('Sucesso', 'Recorrência removida!');
+            } catch (error) {
+              console.error('❌ Erro ao remover recorrência:', error);
+              Alert.alert('Erro', 'Falha ao remover recorrência');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleSave = async () => {
     const parsedAmount = parseFloat(amount);
 
@@ -92,13 +147,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
       Alert.alert('Sucesso', 'Transação atualizada!', [
         {
           text: 'OK',
-          onPress: () => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'MainTabs' }],
-            });
-            navigation.navigate('Transactions');
-          }
+          onPress: () => navigation.goBack()
         }
       ]);
     } catch (error) {
@@ -114,6 +163,26 @@ export default function EditTransactionScreen({ route, navigation }: any) {
   };
 
   const selectedCategory = getSelectedCategory();
+
+  const getFrequencyLabel = (config: any) => {
+    if (!config) return '';
+    
+    const labels: { [key: string]: string } = {
+      daily: 'Diária',
+      weekly: 'Semanal',
+      biweekly: 'Quinzenal',
+      monthly: 'Mensal',
+      yearly: 'Anual',
+    };
+
+    let label = labels[config.frequency] || 'Mensal';
+    
+    if (config.frequency === 'monthly' && config.dayOfMonth) {
+      label += ` • Dia ${config.dayOfMonth}`;
+    }
+
+    return label;
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -226,7 +295,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
         {/* CATEGORIA */}
         <Text style={[styles.label, { color: colors.text }]}>
-          Categoria (Opcional) {/* ✅ ADICIONAR CONTADOR */}
+          Categoria (Opcional)
           {filteredCategories.length > 0 && (
             <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>
               {' '}• {filteredCategories.length} {type === 'income' ? 'receita(s)' : 'despesa(s)'}
@@ -245,7 +314,6 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               <Text style={[styles.categoryButtonText, { color: colors.text }]}>
                 {selectedCategory.name}
               </Text>
-              {/* ✅ BADGE DE TIPO ERRADO */}
               {selectedCategory.type !== type && (
                 <View style={[styles.wrongTypeBadge, { backgroundColor: colors.warning }]}>
                   <Ionicons name="warning" size={14} color="#fff" />
@@ -263,7 +331,6 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* ✅ ALERTA SE CATEGORIA É DO TIPO ERRADO */}
         {selectedCategory && selectedCategory.type !== type && (
           <View style={[styles.warningBox, { backgroundColor: colors.warning + '15', borderColor: colors.warning }]}>
             <Ionicons name="warning" size={20} color={colors.warning} />
@@ -272,6 +339,42 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               Considere selecionar uma categoria de {type === 'income' ? 'receita' : 'despesa'}.
             </Text>
           </View>
+        )}
+
+        {/* 🆕 SEÇÃO DE RECORRÊNCIA */}
+        {hasRecurrence && recurringConfig && (
+          <>
+            <Text style={[styles.label, { color: colors.text }]}>Recorrência</Text>
+            <View style={[styles.recurrenceCard, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+              <View style={styles.recurrenceInfo}>
+                <View style={[styles.recurrenceIcon, { backgroundColor: colors.primary + '20' }]}>
+                  <Ionicons name="repeat" size={24} color={colors.primary} />
+                </View>
+                <View style={styles.recurrenceText}>
+                  <Text style={[styles.recurrenceLabel, { color: colors.text }]}>
+                    {getFrequencyLabel(recurringConfig)}
+                  </Text>
+                  <Text style={[styles.recurrenceHint, { color: colors.textSecondary }]}>
+                    Transação recorrente
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.recurrenceActions}>
+                <TouchableOpacity
+                  style={[styles.recurrenceButton, { backgroundColor: colors.info + '15' }]}
+                  onPress={() => setShowRecurrenceModal(true)}
+                >
+                  <Ionicons name="create-outline" size={20} color={colors.info} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.recurrenceButton, { backgroundColor: colors.error + '15' }]}
+                  onPress={handleRemoveRecurrence}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
         )}
 
         {/* BOTÃO SALVAR */}
@@ -293,7 +396,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* MODAL DE CATEGORIAS - ✅ USAR filteredCategories */}
+      {/* MODAL DE CATEGORIAS */}
       <Modal
         visible={showCategoryModal}
         transparent
@@ -334,7 +437,6 @@ export default function EditTransactionScreen({ route, navigation }: any) {
                 )}
               </TouchableOpacity>
 
-              {/* ✅ LISTA DE CATEGORIAS FILTRADAS */}
               {filteredCategories.length === 0 ? (
                 <View style={styles.emptyCategories}>
                   <Ionicons name="information-circle-outline" size={48} color={colors.textSecondary} />
@@ -371,6 +473,15 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {/* 🆕 MODAL DE EDITAR RECORRÊNCIA */}
+      <RecurrenceConfigModal
+        visible={showRecurrenceModal}
+        transaction={transaction}
+        mode="edit"
+        onClose={() => setShowRecurrenceModal(false)}
+        onConfirm={handleEditRecurrence}
+      />
     </View>
   );
 }
@@ -482,6 +593,49 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  recurrenceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  recurrenceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  recurrenceIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recurrenceText: {
+    flex: 1,
+  },
+  recurrenceLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  recurrenceHint: {
+    fontSize: 13,
+  },
+  recurrenceActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  recurrenceButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   saveButton: {
     flexDirection: 'row',

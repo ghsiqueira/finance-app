@@ -21,6 +21,7 @@ import CurrencyConverterScreen from '../screens/CurrencyConverterScreen';
 import CurrencySelectionScreen from '../screens/CurrencySelectionScreen';
 import ShareGoalScreen from '../screens/ShareGoalScreen';
 import GoalInvitesScreen from '../screens/GoalInvitesScreen';
+import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -93,6 +94,16 @@ function SettingsStack() {
       <Stack.Screen 
         name="CategoryManagement" 
         component={CategoryManagementScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="RecurringTransactions" 
+        component={RecurringTransactionsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="AddTransaction" 
+        component={AddTransactionScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
