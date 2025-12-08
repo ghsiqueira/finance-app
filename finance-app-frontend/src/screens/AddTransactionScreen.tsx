@@ -14,11 +14,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAchievements } from '../contexts/AchievementContext';
 import { transactionAPI, categoryAPI } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddTransactionScreen({ route, navigation }: any) {
   const { colors } = useTheme();
+  const { checkAchievements } = useAchievements();
   
   const initialType = route?.params?.type || 'expense';
   
@@ -98,7 +100,15 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         };
       }
 
+      console.log('💰 Criando transação...');
       await transactionAPI.create(transactionData);
+      console.log('✅ Transação criada com sucesso!');
+      
+      // 🆕 VERIFICAR CONQUISTAS
+      console.log('🏆 Verificando conquistas...');
+      setTimeout(() => {
+        checkAchievements();
+      }, 500);
       
       Alert.alert(
         'Sucesso', 
@@ -274,7 +284,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 🆕 RECORRÊNCIA */}
+        {/* RECORRÊNCIA */}
         <View style={[styles.recurrenceSection, { borderTopColor: colors.border }]}>
           <View style={styles.recurrenceHeader}>
             <View style={styles.recurrenceHeaderLeft}>
@@ -432,7 +442,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      {/* 🆕 MODAL DE FREQUÊNCIA */}
+      {/* MODAL DE FREQUÊNCIA */}
       <Modal
         visible={showFrequencyModal}
         transparent

@@ -11,6 +11,8 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardAPI, insightsAPI } from '../services/api';
@@ -33,13 +35,25 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadDashboard = async () => {
     try {
+      // 🆕 LOGS DE DEBUG
+      console.log('📊 === LOADING DASHBOARD ===');
+      
+      const token = await AsyncStorage.getItem('@token');
+      console.log('Token no storage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
+      console.log('Authorization header:', api.defaults.headers.common['Authorization']);
+      
+      console.log('Chamando dashboardAPI.getSummary...');
       const response = await dashboardAPI.getSummary();
+      console.log('✅ Dashboard carregado com sucesso');
+      
       setDashboardData(response.data);
       
       const insightsRes = await insightsAPI.getSummary();
       setInsights(insightsRes.data.insights || []);
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
+    } catch (error: any) {
+      console.error('❌ Error loading dashboard:', error);
+      console.error('Response:', error.response?.data);
+      console.error('Status:', error.response?.status);
       Alert.alert('Erro', 'Falha ao carregar dashboard');
     } finally {
       setLoading(false);

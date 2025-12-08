@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import Goal from '../models/Goal.js';
 import User from '../models/User.js';
+import { checkAllAchievements } from './achievementController.js';
 import type { AuthRequest } from '../middleware/auth.js';
 
 export const createGoal = async (req: AuthRequest, res: Response) => {
@@ -48,6 +49,12 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
     });
 
     await goal.save();
+    try {
+      await checkAllAchievements(req.userId);
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+    }
+
     await goal.populate('categoryId');
 
     console.log('Goal created with owner as member');
@@ -218,6 +225,12 @@ export const addProgress = async (req: AuthRequest, res: Response) => {
     }
 
     await goal.save();
+    try {
+      await checkAllAchievements(req.userId);
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+    }
+
     await goal.populate('categoryId');
 
     res.json(goal);
@@ -549,6 +562,13 @@ export const addProgressToSharedGoal = async (req: AuthRequest, res: Response) =
     } as any);
 
     await goal.save();
+    
+    try {
+      await checkAllAchievements(req.userId);
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+    }
+
     await goal.populate('categoryId');
 
     res.json(goal);

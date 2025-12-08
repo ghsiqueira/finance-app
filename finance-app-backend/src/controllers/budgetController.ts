@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import Budget from '../models/Budget.js';
 import Transaction from '../models/Transaction.js';
 import type { AuthRequest } from '../middleware/auth.js';
+import { checkAllAchievements } from './achievementController.js';
 
 const getNextRenewalDate = (renewalDay: number, currentDate: Date = new Date()): Date => {
   const year = currentDate.getFullYear();
@@ -58,7 +59,13 @@ export const createBudget = async (req: AuthRequest, res: Response) => {
     });
 
     await budget.save();
-    const populatedBudget = await Budget.findById(budget._id).populate('categoryId');
+    try {
+      await checkAllAchievements(req.userId);
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+    }
+
+    const populatedBudget = await Budget.findById(budget._id).populate('categoryId')
     
     res.status(201).json(populatedBudget);
   } catch (error) {

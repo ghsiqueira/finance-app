@@ -1,8 +1,11 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAchievements } from '../contexts/AchievementContext';
+import AchievementUnlockedModal from '../components/AchievementUnlockedModal';
 import HomeScreen from '../screens/HomeScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import BudgetsScreen from '../screens/BudgetsScreen';
@@ -22,6 +25,7 @@ import CurrencySelectionScreen from '../screens/CurrencySelectionScreen';
 import ShareGoalScreen from '../screens/ShareGoalScreen';
 import GoalInvitesScreen from '../screens/GoalInvitesScreen';
 import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen';
+import AchievementsScreen from '../screens/AchievementsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -106,7 +110,25 @@ function SettingsStack() {
         component={AddTransactionScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+        name="Achievements" 
+        component={AchievementsScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
+  );
+}
+
+// 🆕 COMPONENTE DO MODAL DE CONQUISTAS
+function AchievementModal() {
+  const { showUnlockedModal, unlockedAchievements, closeModal } = useAchievements();
+  
+  return (
+    <AchievementUnlockedModal
+      visible={showUnlockedModal}
+      achievements={unlockedAchievements}
+      onClose={closeModal}
+    />
   );
 }
 
@@ -114,73 +136,78 @@ export default function AppNavigator() {
   const { colors } = useTheme();
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: any;
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: any;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Transactions') {
-            iconName = focused ? 'list' : 'list-outline';
-          } else if (route.name === 'Budgets') {
-            iconName = focused ? 'wallet' : 'wallet-outline';
-          } else if (route.name === 'Goals') {
-            iconName = focused ? 'flag' : 'flag-outline';
-          } else if (route.name === 'Reports') {
-            iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
+            if (route.name === 'Home') {
+              iconName = focused ? 'home' : 'home-outline';
+            } else if (route.name === 'Transactions') {
+              iconName = focused ? 'list' : 'list-outline';
+            } else if (route.name === 'Budgets') {
+              iconName = focused ? 'wallet' : 'wallet-outline';
+            } else if (route.name === 'Goals') {
+              iconName = focused ? 'flag' : 'flag-outline';
+            } else if (route.name === 'Reports') {
+              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
+            } else if (route.name === 'Settings') {
+              iconName = focused ? 'settings' : 'settings-outline';
+            }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      })}
-    >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeStack}
-        options={{ tabBarLabel: 'Início' }}
-      />
-      <Tab.Screen 
-        name="Transactions" 
-        component={TransactionsStack}
-        options={{ tabBarLabel: 'Transações' }}
-      />
-      <Tab.Screen 
-        name="Budgets" 
-        component={BudgetsStack}
-        options={{ tabBarLabel: 'Orçamentos' }}
-      />
-      <Tab.Screen 
-        name="Goals" 
-        component={GoalsStack}
-        options={{ tabBarLabel: 'Metas' }}
-      />
-      <Tab.Screen 
-        name="Reports" 
-        component={ReportsStack}
-        options={{ tabBarLabel: 'Relatórios' }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsStack}
-        options={{ tabBarLabel: 'Ajustes' }}
-      />
-    </Tab.Navigator>
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarStyle: {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            height: 60,
+            paddingBottom: 8,
+            paddingTop: 8,
+          },
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
+        })}
+      >
+        <Tab.Screen 
+          name="Home" 
+          component={HomeStack}
+          options={{ tabBarLabel: 'Início' }}
+        />
+        <Tab.Screen 
+          name="Transactions" 
+          component={TransactionsStack}
+          options={{ tabBarLabel: 'Transações' }}
+        />
+        <Tab.Screen 
+          name="Budgets" 
+          component={BudgetsStack}
+          options={{ tabBarLabel: 'Orçamentos' }}
+        />
+        <Tab.Screen 
+          name="Goals" 
+          component={GoalsStack}
+          options={{ tabBarLabel: 'Metas' }}
+        />
+        <Tab.Screen 
+          name="Reports" 
+          component={ReportsStack}
+          options={{ tabBarLabel: 'Relatórios' }}
+        />
+        <Tab.Screen 
+          name="Settings" 
+          component={SettingsStack}
+          options={{ tabBarLabel: 'Ajustes' }}
+        />
+      </Tab.Navigator>
+      
+      {/* 🆕 MODAL DE CONQUISTAS (só aparece quando logado) */}
+      <AchievementModal />
+    </View>
   );
 }

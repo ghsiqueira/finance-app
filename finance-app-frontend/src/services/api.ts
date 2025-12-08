@@ -18,7 +18,6 @@ const getApiUrl = () => {
 };
 
 const API_URL = getApiUrl();
-
 console.log('🌐 API URL:', API_URL);
 
 const api = axios.create({
@@ -29,7 +28,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('@token');
-    if (token) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -49,10 +48,11 @@ export const authAPI = {
   forgotPassword: (email: string) => 
     api.post('/auth/forgot-password', { email }),
   verifyResetCode: (data: { email: string; code: string }) => 
-    api.post('/auth/verify-code', data),
-  resetPassword: (data: { email: string; code: string; password: string }) => 
+    api.post('/auth/verify-reset-code', data),
+  resetPassword: (data: { email: string; code: string; newPassword: string }) => 
     api.post('/auth/reset-password', data),
-  getProfile: () => api.get('/auth/profile'),
+  deleteAccount: (password: string) => 
+    api.delete('/auth/delete-account', { data: { password } }),
 };
 
 export const transactionAPI = {
@@ -162,4 +162,10 @@ export const recurrenceAPI = {
     dayOfMonth?: number; 
     isBusinessDay?: boolean 
   }) => api.patch(`/recurrence/${id}/edit`, config),
+};
+
+export const achievementAPI = {
+  getAll: () => api.get('/achievements'),
+  check: () => api.post('/achievements/check'),
+  markAsSeen: (achievementId: string) => api.patch(`/achievements/${achievementId}/seen`),
 };

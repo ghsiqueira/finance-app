@@ -7,17 +7,27 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { getCurrencyByCode } from '../types/currency';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../services/api';
 
 export default function SettingsScreen({ navigation }: any) {
   const { colors, isDark, toggleTheme } = useTheme();
   const { mainCurrency, setMainCurrency, lastUpdated } = useCurrency();
   const { user, logout } = useAuth();
+
+  // 🆕 STATES PARA EXCLUSÃO DE CONTA
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const mainCurrencyData = getCurrencyByCode(mainCurrency);
 
@@ -32,6 +42,54 @@ export default function SettingsScreen({ navigation }: any) {
           style: 'destructive',
           onPress: logout,
         },
+      ]
+    );
+  };
+
+  // 🆕 FUNÇÃO PARA EXCLUIR CONTA
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      Alert.alert('Erro', 'Digite sua senha para confirmar');
+      return;
+    }
+
+    Alert.alert(
+      '⚠️ ATENÇÃO',
+      'Esta ação é IRREVERSÍVEL!\n\nTODOS os seus dados serão PERMANENTEMENTE deletados:\n• Transações\n• Orçamentos\n• Metas\n• Categorias\n• Conquistas\n\nDeseja realmente continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sim, deletar tudo',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeletingAccount(true);
+              await authAPI.deleteAccount(deletePassword);
+              
+              Alert.alert(
+                'Conta Deletada',
+                'Sua conta e todos os dados foram removidos permanentemente.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Usa o logout do AuthContext
+                      logout();
+                    }
+                  }
+                ]
+              );
+            } catch (error: any) {
+              console.error('Error deleting account:', error);
+              const errorMsg = error.response?.data?.message || 'Falha ao deletar conta. Verifique sua senha.';
+              Alert.alert('Erro', errorMsg);
+            } finally {
+              setDeletingAccount(false);
+              setShowDeleteModal(false);
+              setDeletePassword('');
+            }
+          }
+        }
       ]
     );
   };
@@ -148,7 +206,6 @@ export default function SettingsScreen({ navigation }: any) {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 🆕 TRANSAÇÕES RECORRENTES */}
         <TouchableOpacity
           style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
           onPress={() => navigation.navigate('RecurringTransactions')}
@@ -161,6 +218,29 @@ export default function SettingsScreen({ navigation }: any) {
               <Text style={[styles.settingLabel, { color: colors.text }]}>Transações Recorrentes</Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                 Automatize pagamentos mensais
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* SEÇÃO: GAMIFICAÇÃO */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>GAMIFICAÇÃO</Text>
+        
+        <TouchableOpacity
+          style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
+          onPress={() => navigation.navigate('Achievements')}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#f39c1220' }]}>
+              <Ionicons name="trophy" size={24} color="#f39c12" />
+            </View>
+            <View>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Conquistas</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Veja suas conquistas e marcos
               </Text>
             </View>
           </View>
@@ -268,6 +348,29 @@ export default function SettingsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {/* 🆕 SEÇÃO: ZONA DE PERIGO */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.error }]}>ZONA DE PERIGO</Text>
+        
+        <TouchableOpacity
+          style={[styles.card, styles.settingItem, { backgroundColor: colors.card, borderColor: colors.error, borderWidth: 2 }]}
+          onPress={() => setShowDeleteModal(true)}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.error + '20' }]}>
+              <Ionicons name="trash" size={24} color={colors.error} />
+            </View>
+            <View>
+              <Text style={[styles.settingLabel, { color: colors.error }]}>Excluir Conta</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Deletar permanentemente sua conta e dados
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.error} />
+        </TouchableOpacity>
+      </View>
+
       {/* Versão */}
       <View style={styles.versionContainer}>
         <Text style={[styles.versionText, { color: colors.textSecondary }]}>
@@ -276,6 +379,93 @@ export default function SettingsScreen({ navigation }: any) {
       </View>
 
       <View style={{ height: 40 }} />
+
+      {/* 🆕 MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.deleteModalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.deleteModalHeader, { backgroundColor: colors.error + '15' }]}>
+              <Ionicons name="warning" size={48} color={colors.error} />
+              <Text style={[styles.deleteModalTitle, { color: colors.error }]}>
+                Excluir Conta
+              </Text>
+            </View>
+
+            <View style={styles.deleteModalBody}>
+              <Text style={[styles.deleteModalText, { color: colors.text }]}>
+                Esta ação é <Text style={{ fontWeight: '700' }}>IRREVERSÍVEL</Text> e irá deletar permanentemente:
+              </Text>
+              <View style={styles.deleteList}>
+                <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
+                  • Todas as suas transações
+                </Text>
+                <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
+                  • Todos os orçamentos
+                </Text>
+                <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
+                  • Todas as metas
+                </Text>
+                <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
+                  • Todas as categorias
+                </Text>
+                <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
+                  • Todas as conquistas
+                </Text>
+              </View>
+
+              <Text style={[styles.deleteModalLabel, { color: colors.text }]}>
+                Digite sua senha para confirmar:
+              </Text>
+              <TextInput
+                style={[
+                  styles.deletePasswordInput,
+                  { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }
+                ]}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                placeholder="Senha"
+                placeholderTextColor={colors.placeholder}
+                secureTextEntry
+                autoFocus
+              />
+            </View>
+
+            <View style={styles.deleteModalFooter}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, { backgroundColor: colors.background }]}
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword('');
+                }}
+                disabled={deletingAccount}
+              >
+                <Text style={[styles.deleteModalButtonText, { color: colors.text }]}>
+                  Cancelar
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.deleteModalButton, { backgroundColor: colors.error }]}
+                onPress={handleDeleteAccount}
+                disabled={deletingAccount}
+              >
+                {deletingAccount ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={[styles.deleteModalButtonText, { color: '#fff' }]}>
+                    Excluir Tudo
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -384,5 +574,72 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 13,
+  },
+  // 🆕 ESTILOS DO MODAL DE EXCLUSÃO
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  deleteModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    padding: 24,
+  },
+  deleteModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  deleteModalBody: {
+    padding: 24,
+  },
+  deleteModalText: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  deleteList: {
+    marginBottom: 20,
+    paddingLeft: 8,
+  },
+  deleteListItem: {
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  deleteModalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  deletePasswordInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+  },
+  deleteModalFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  deleteModalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  deleteModalButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

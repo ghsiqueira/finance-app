@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../services/api';
+import api, { authAPI } from '../services/api';
 
 interface User {
   id: string;
@@ -38,6 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedUser && storedToken) {
         const userData = JSON.parse(storedUser);
         console.log('Loaded user:', userData.email);
+        
+        // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        
         setUser(userData);
       }
     } catch (error) {
@@ -58,8 +62,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Login successful');
       console.log('User ID:', userData.id);
 
+      // 🆕 SALVA NO STORAGE
       await AsyncStorage.setItem('@token', token);
       await AsyncStorage.setItem('@user', JSON.stringify(userData));
+
+      // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       console.log('Token and user saved');
       setUser(userData);
@@ -80,10 +88,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Registration successful');
       console.log('User ID:', userData.id);
 
+      // 🆕 SALVA NO STORAGE
       await AsyncStorage.setItem('@token', token);
       await AsyncStorage.setItem('@user', JSON.stringify(userData));
 
-      console.log('Token and user saved');
+      // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      console.log('Token and user saved + header configured');
       setUser(userData);
     } catch (error: any) {
       console.error('Register error:', error.response?.data?.message || error.message);
@@ -98,6 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       await AsyncStorage.removeItem('@token');
       await AsyncStorage.removeItem('@user');
+      
+      // 🆕 REMOVE O HEADER
+      delete api.defaults.headers.common['Authorization'];
       
       console.log('Token and user removed');
       console.log('==============');
