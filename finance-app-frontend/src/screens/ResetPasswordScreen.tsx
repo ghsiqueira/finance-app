@@ -43,7 +43,7 @@ export default function ResetPasswordScreen({ navigation, route }: any) {
       await authAPI.resetPassword({
         email: email,
         code: code,
-        password: newPassword
+        newPassword: newPassword
       });
       Alert.alert('Sucesso', 'Senha redefinida com sucesso!', [
         { text: 'OK', onPress: () => navigation.navigate('Login') }

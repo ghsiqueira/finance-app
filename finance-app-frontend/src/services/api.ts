@@ -104,9 +104,9 @@ export const goalAPI = {
   delete: (id: string) => api.delete(`/goals/${id}`),
   addProgress: (id: string, data: any) => api.post(`/goals/${id}/progress`, data),
   addSharedProgress: (id: string, amount: number) => 
-    api.post(`/goals/${id}/progress`, { amount }),
+    api.post(`/goals/${id}/shared-progress`, { amount }),
   share: (id: string, data: any) => api.post(`/goals/${id}/share`, data),
-  shareGoal: (id: string, data: any) => api.post(`/goals/${id}/share`, data),
+  shareGoal: (id: string, invites: any) => api.post(`/goals/${id}/share`, { invites }),
   updateMember: (goalId: string, memberId: string, data: any) => 
     api.put(`/goals/${goalId}/members/${memberId}`, data),
   updateMemberRole: (goalId: string, memberId: string, role: string, limit?: number) => 
@@ -117,8 +117,8 @@ export const goalAPI = {
   getInvites: () => api.get('/goals/invites'),
   respondInvite: (inviteId: string, data: any) => 
     api.post(`/goals/invites/${inviteId}/respond`, data),
-  respondToInvite: (inviteId: string, data: any) => 
-    api.post(`/goals/invites/${inviteId}/respond`, data),
+  respondToInvite: (goalId: string, accept: boolean) => 
+    api.post(`/goals/${goalId}/invite/respond`, { accept })
 };
 
 export const reportAPI = {
@@ -162,10 +162,4 @@ export const recurrenceAPI = {
     dayOfMonth?: number; 
     isBusinessDay?: boolean 
   }) => api.patch(`/recurrence/${id}/edit`, config),
-};
-
-export const achievementAPI = {
-  getAll: () => api.get('/achievements'),
-  check: () => api.post('/achievements/check'),
-  markAsSeen: (achievementId: string) => api.patch(`/achievements/${achievementId}/seen`),
 };

@@ -3,7 +3,6 @@ import Transaction from '../models/Transaction.js';
 import Category from '../models/Category.js';
 import Budget from '../models/Budget.js';
 import type { AuthRequest } from '../middleware/auth.js';
-import { checkAllAchievements } from './achievementController.js';
 
 export const createTransaction = async (req: AuthRequest, res: Response) => {
   try {
@@ -100,12 +99,6 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 
     const transaction = new Transaction(transactionData);
     await transaction.save();
-
-    try {
-      await checkAllAchievements(req.userId);
-    } catch (error) {
-      console.error('Error checking achievements:', error);
-    }
 
     console.log('✅ Transação salva:', { 
       id: transaction._id, 

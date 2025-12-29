@@ -8,9 +8,6 @@ const CACHE_DURATION = 60 * 60 * 1000;
 
 export const getExchangeRates = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
 
     const { base = 'USD' } = req.query;
     const cacheKey = `rates_${base}`;
@@ -59,9 +56,6 @@ export const getExchangeRates = async (req: AuthRequest, res: Response) => {
 
 export const convertCurrency = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
 
     const { amount, from, to } = req.query;
 

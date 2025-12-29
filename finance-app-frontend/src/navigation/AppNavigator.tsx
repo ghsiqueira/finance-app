@@ -4,8 +4,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { useAchievements } from '../contexts/AchievementContext';
-import AchievementUnlockedModal from '../components/AchievementUnlockedModal';
 import HomeScreen from '../screens/HomeScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import BudgetsScreen from '../screens/BudgetsScreen';
@@ -25,7 +23,6 @@ import CurrencySelectionScreen from '../screens/CurrencySelectionScreen';
 import ShareGoalScreen from '../screens/ShareGoalScreen';
 import GoalInvitesScreen from '../screens/GoalInvitesScreen';
 import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen';
-import AchievementsScreen from '../screens/AchievementsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -110,25 +107,7 @@ function SettingsStack() {
         component={AddTransactionScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Achievements" 
-        component={AchievementsScreen}
-        options={{ headerShown: false }}
-      />
     </Stack.Navigator>
-  );
-}
-
-// 🆕 COMPONENTE DO MODAL DE CONQUISTAS
-function AchievementModal() {
-  const { showUnlockedModal, unlockedAchievements, closeModal } = useAchievements();
-  
-  return (
-    <AchievementUnlockedModal
-      visible={showUnlockedModal}
-      achievements={unlockedAchievements}
-      onClose={closeModal}
-    />
   );
 }
 
@@ -206,8 +185,6 @@ export default function AppNavigator() {
         />
       </Tab.Navigator>
       
-      {/* 🆕 MODAL DE CONQUISTAS (só aparece quando logado) */}
-      <AchievementModal />
     </View>
   );
 }

@@ -14,13 +14,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { useAchievements } from '../contexts/AchievementContext';
-import { transactionAPI, categoryAPI } from '../services/api';
+import { transactionAPI, categoryAPI, budgetAPI } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AddTransactionScreen({ route, navigation }: any) {
   const { colors } = useTheme();
-  const { checkAchievements } = useAchievements();
   
   const initialType = route?.params?.type || 'expense';
   
@@ -29,9 +27,12 @@ export default function AddTransactionScreen({ route, navigation }: any) {
   const [date, setDate] = useState(new Date());
   const [type, setType] = useState<'income' | 'expense'>(initialType);
   const [categoryId, setCategoryId] = useState('');
+  const [budgetId, setBudgetId] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<any[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [isRecurring, setIsRecurring] = useState(false);
@@ -40,19 +41,30 @@ export default function AddTransactionScreen({ route, navigation }: any) {
   const [showFrequencyModal, setShowFrequencyModal] = useState(false);
 
   useEffect(() => {
-    loadCategories();
+    loadData();
   }, []);
 
-  const loadCategories = async () => {
+  const loadData = async () => {
     try {
-      const response = await categoryAPI.getAll();
-      setCategories(response.data);
+      const [categoriesRes, budgetsRes] = await Promise.all([
+        categoryAPI.getAll(),
+        budgetAPI.getAll(),
+      ]);
+      setCategories(categoriesRes.data);
+      setBudgets(budgetsRes.data);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('Error loading data:', error);
     }
   };
 
   const filteredCategories = categories.filter(cat => cat.type === type);
+  
+  const filteredBudgets = budgets.filter(b => 
+    type === 'expense' && 
+    b.amount !== undefined &&
+    b.amount !== null &&
+    (!categoryId || b.categoryId?._id === categoryId)
+  );
 
   const handleTypeChange = (newType: 'income' | 'expense') => {
     setType(newType);
@@ -61,8 +73,26 @@ export default function AddTransactionScreen({ route, navigation }: any) {
       const selectedCategory = categories.find(c => c._id === categoryId);
       if (selectedCategory && selectedCategory.type !== newType) {
         setCategoryId('');
+        setBudgetId('');
       }
     }
+    
+    if (newType === 'income') {
+      setBudgetId('');
+    }
+  };
+
+  const handleCategoryChange = (newCategoryId: string) => {
+    setCategoryId(newCategoryId);
+    
+    if (budgetId) {
+      const selectedBudget = budgets.find(b => b._id === budgetId);
+      if (selectedBudget && selectedBudget.categoryId?._id !== newCategoryId) {
+        setBudgetId('');
+      }
+    }
+    
+    setShowCategoryModal(false);
   };
 
   const handleSave = async () => {
@@ -104,17 +134,12 @@ export default function AddTransactionScreen({ route, navigation }: any) {
       await transactionAPI.create(transactionData);
       console.log('✅ Transação criada com sucesso!');
       
-      // 🆕 VERIFICAR CONQUISTAS
-      console.log('🏆 Verificando conquistas...');
-      setTimeout(() => {
-        checkAchievements();
-      }, 500);
-      
       Alert.alert(
         'Sucesso', 
         isRecurring ? 'Transação recorrente criada!' : 'Transação criada!',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
+      
     } catch (error) {
       console.error('Error creating transaction:', error);
       Alert.alert('Erro', 'Falha ao criar transação');
@@ -123,58 +148,60 @@ export default function AddTransactionScreen({ route, navigation }: any) {
     }
   };
 
-  const getSelectedCategory = () => {
-    return categories.find(c => c._id === categoryId);
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setDate(selectedDate);
+      setDayOfMonth(selectedDate.getDate().toString());
+    }
   };
-
-  const selectedCategory = getSelectedCategory();
-
-  const frequencyOptions = [
-    { value: 'daily', label: 'Diária', icon: 'today' },
-    { value: 'weekly', label: 'Semanal', icon: 'calendar' },
-    { value: 'biweekly', label: 'Quinzenal', icon: 'calendar-outline' },
-    { value: 'monthly', label: 'Mensal', icon: 'calendar-number' },
-    { value: 'yearly', label: 'Anual', icon: 'calendar-sharp' },
-  ];
 
   const getFrequencyLabel = () => {
-    return frequencyOptions.find(f => f.value === frequency)?.label || 'Mensal';
+    const labels = {
+      daily: 'Diariamente',
+      weekly: 'Semanalmente',
+      biweekly: 'Quinzenalmente',
+      monthly: 'Mensalmente',
+      yearly: 'Anualmente',
+    };
+    return labels[frequency];
   };
+
+  const selectedCategory = categories.find(c => c._id === categoryId);
+  const selectedBudget = budgets.find(b => b._id === budgetId);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* HEADER */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Nova Transação</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Nova Transação</Text>
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* TIPO */}
+      <ScrollView style={styles.content}>
         <Text style={[styles.label, { color: colors.text }]}>Tipo</Text>
         <View style={styles.typeContainer}>
           <TouchableOpacity
             style={[
               styles.typeButton,
-              {
-                backgroundColor: type === 'income' ? colors.success : colors.card,
-                borderColor: type === 'income' ? colors.success : colors.border,
-              }
+              type === 'income' && { backgroundColor: colors.success },
+              type !== 'income' && { backgroundColor: colors.card, borderColor: colors.border }
             ]}
-            onPress={() => handleTypeChange('income')} 
+            onPress={() => handleTypeChange('income')}
           >
             <Ionicons
               name="arrow-down-circle"
               size={24}
               color={type === 'income' ? '#fff' : colors.textSecondary}
             />
-            <Text style={[
-              styles.typeButtonText,
-              { color: type === 'income' ? '#fff' : colors.text }
-            ]}>
+            <Text
+              style={[
+                styles.typeButtonText,
+                { color: type === 'income' ? '#fff' : colors.textSecondary }
+              ]}
+            >
               Receita
             </Text>
           </TouchableOpacity>
@@ -182,49 +209,46 @@ export default function AddTransactionScreen({ route, navigation }: any) {
           <TouchableOpacity
             style={[
               styles.typeButton,
-              {
-                backgroundColor: type === 'expense' ? colors.error : colors.card,
-                borderColor: type === 'expense' ? colors.error : colors.border,
-              }
+              type === 'expense' && { backgroundColor: colors.error },
+              type !== 'expense' && { backgroundColor: colors.card, borderColor: colors.border }
             ]}
-            onPress={() => handleTypeChange('expense')} 
+            onPress={() => handleTypeChange('expense')}
           >
             <Ionicons
               name="arrow-up-circle"
               size={24}
               color={type === 'expense' ? '#fff' : colors.textSecondary}
             />
-            <Text style={[
-              styles.typeButtonText,
-              { color: type === 'expense' ? '#fff' : colors.text }
-            ]}>
+            <Text
+              style={[
+                styles.typeButtonText,
+                { color: type === 'expense' ? '#fff' : colors.textSecondary }
+              ]}
+            >
               Despesa
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* DESCRIÇÃO */}
         <Text style={[styles.label, { color: colors.text }]}>Descrição</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Ex: Almoço, Salário, Compras"
+          placeholder="Ex: Almoço, Salário, Compras..."
           placeholderTextColor={colors.placeholder}
         />
 
-        {/* VALOR */}
         <Text style={[styles.label, { color: colors.text }]}>Valor (R$)</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={amount}
           onChangeText={setAmount}
-          placeholder="0,00"
+          placeholder="0.00"
           placeholderTextColor={colors.placeholder}
           keyboardType="decimal-pad"
         />
 
-        {/* DATA */}
         <Text style={[styles.label, { color: colors.text }]}>Data</Text>
         <TouchableOpacity
           style={[styles.dateButton, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -241,24 +265,13 @@ export default function AddTransactionScreen({ route, navigation }: any) {
             value={date}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(Platform.OS === 'ios');
-              if (selectedDate) {
-                setDate(selectedDate);
-                setDayOfMonth(selectedDate.getDate().toString());
-              }
-            }}
+            onChange={onDateChange}
+            maximumDate={new Date()}
           />
         )}
 
-        {/* CATEGORIA */}
         <Text style={[styles.label, { color: colors.text }]}>
-          Categoria (Opcional)
-          {filteredCategories.length > 0 && (
-            <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>
-              {' '}• {filteredCategories.length} {type === 'income' ? 'receita(s)' : 'despesa(s)'}
-            </Text>
-          )}
+          Categoria (Opcional) · {filteredCategories.length} {type === 'income' ? 'receita(s)' : 'despesa(s)'}
         </Text>
         <TouchableOpacity
           style={[styles.categoryButton, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -275,62 +288,96 @@ export default function AddTransactionScreen({ route, navigation }: any) {
             </>
           ) : (
             <>
-              <Ionicons name="pricetag-outline" size={24} color={colors.textSecondary} />
+              <Ionicons name="apps-outline" size={24} color={colors.textSecondary} />
               <Text style={[styles.categoryButtonText, { color: colors.textSecondary }]}>
                 Selecionar categoria
               </Text>
             </>
           )}
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* RECORRÊNCIA */}
-        <View style={[styles.recurrenceSection, { borderTopColor: colors.border }]}>
+        {type === 'expense' && categoryId && (
+          <>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Orçamento (Opcional)
+            </Text>
+            <TouchableOpacity
+              style={[styles.categoryButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => setShowBudgetModal(true)}
+            >
+              {budgetId ? (
+                <>
+                  <View style={styles.categoryInfo}>
+                    <Ionicons name="wallet" size={24} color={colors.primary} />
+                    <Text style={[styles.categoryButtonText, { color: colors.text }]}>
+                      {selectedBudget?.name || selectedBudget?.categoryId?.name || 'Orçamento'}
+                    </Text>
+                  </View>
+                  <View style={styles.categoryRight}>
+                    {selectedBudget?.amount && (
+                      <Text style={[styles.budgetAmount, { color: colors.textSecondary }]}>
+                        R$ {selectedBudget.amount.toFixed(2)}
+                      </Text>
+                    )}
+                    <TouchableOpacity onPress={() => setBudgetId('')}>
+                      <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="wallet-outline" size={24} color={colors.textSecondary} />
+                  <Text style={[styles.categoryButtonText, { color: colors.textSecondary }]}>
+                    Vincular a um orçamento
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+
+        <View style={styles.recurrenceContainer}>
           <View style={styles.recurrenceHeader}>
-            <View style={styles.recurrenceHeaderLeft}>
-              <Ionicons name="repeat" size={24} color={colors.primary} />
-              <View>
-                <Text style={[styles.recurrenceTitle, { color: colors.text }]}>
-                  Transação Recorrente
-                </Text>
-                <Text style={[styles.recurrenceSubtitle, { color: colors.textSecondary }]}>
-                  Repetir automaticamente
-                </Text>
-              </View>
+            <View>
+              <Text style={[styles.label, { color: colors.text, marginBottom: 0 }]}>
+                Transação Recorrente
+              </Text>
+              <Text style={[styles.recurrenceSubtitle, { color: colors.textSecondary }]}>
+                Repetir automaticamente
+              </Text>
             </View>
             <Switch
               value={isRecurring}
               onValueChange={setIsRecurring}
-              trackColor={{ false: colors.border, true: colors.primary + '40' }}
-              thumbColor={isRecurring ? colors.primary : colors.card}
+              trackColor={{ false: colors.border, true: colors.primary + '80' }}
+              thumbColor={isRecurring ? colors.primary : colors.textSecondary}
             />
           </View>
 
           {isRecurring && (
             <View style={styles.recurrenceConfig}>
+              <Text style={[styles.label, { color: colors.text }]}>Frequência</Text>
               <TouchableOpacity
                 style={[styles.frequencyButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => setShowFrequencyModal(true)}
               >
-                <Ionicons name="time" size={24} color={colors.primary} />
+                <Ionicons name="repeat" size={24} color={colors.primary} />
                 <Text style={[styles.frequencyButtonText, { color: colors.text }]}>
                   {getFrequencyLabel()}
                 </Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
 
               {frequency === 'monthly' && (
                 <>
-                  <Text style={[styles.label, { color: colors.text, marginTop: 12 }]}>
-                    Dia do mês
-                  </Text>
+                  <Text style={[styles.label, { color: colors.text }]}>Dia do mês</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
                     value={dayOfMonth}
-                    onChangeText={(text) => {
-                      const num = parseInt(text);
-                      if (text === '' || (num >= 1 && num <= 31)) {
-                        setDayOfMonth(text);
+                    onChangeText={(value) => {
+                      const num = parseInt(value);
+                      if (value === '' || (!isNaN(num) && num >= 1 && num <= 31)) {
+                        setDayOfMonth(value);
                       }
                     }}
                     placeholder="1-31"
@@ -344,28 +391,23 @@ export default function AddTransactionScreen({ route, navigation }: any) {
           )}
         </View>
 
-        {/* BOTÃO SALVAR */}
         <TouchableOpacity
           style={[styles.saveButton, { backgroundColor: colors.primary }]}
           onPress={handleSave}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Ionicons name="checkmark" size={24} color="#fff" />
-              <Text style={styles.saveButtonText}>
-                {isRecurring ? 'Criar Recorrência' : 'Criar Transação'}
-              </Text>
+              <Ionicons name="checkmark-circle" size={24} color="#fff" />
+              <Text style={styles.saveButtonText}>Criar Transação</Text>
             </>
           )}
         </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* MODAL DE CATEGORIAS */}
+      {/* MODAL DE CATEGORIA */}
       <Modal
         visible={showCategoryModal}
         transparent
@@ -374,11 +416,13 @@ export default function AddTransactionScreen({ route, navigation }: any) {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <View style={styles.modalHeader}>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Selecionar Categoria</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Selecionar Categoria
+                </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                  {type === 'income' ? '💰 Receitas' : '💸 Despesas'} • {filteredCategories.length} categoria(s)
+                  {filteredCategories.length} {type === 'income' ? 'receita(s)' : 'despesa(s)'}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
@@ -387,24 +431,6 @@ export default function AddTransactionScreen({ route, navigation }: any) {
             </View>
 
             <ScrollView style={styles.modalScroll}>
-              <TouchableOpacity
-                style={[styles.categoryOption, { borderBottomColor: colors.border }]}
-                onPress={() => {
-                  setCategoryId('');
-                  setShowCategoryModal(false);
-                }}
-              >
-                <View style={[styles.categoryIconSmall, { backgroundColor: colors.textSecondary }]}>
-                  <Ionicons name="close" size={20} color="#fff" />
-                </View>
-                <Text style={[styles.categoryOptionText, { color: colors.text }]}>
-                  Nenhuma categoria
-                </Text>
-                {!categoryId && (
-                  <Ionicons name="checkmark" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-
               {filteredCategories.length === 0 ? (
                 <View style={styles.emptyCategories}>
                   <Ionicons name="information-circle-outline" size={48} color={colors.textSecondary} />
@@ -420,10 +446,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
                   <TouchableOpacity
                     key={category._id}
                     style={[styles.categoryOption, { borderBottomColor: colors.border }]}
-                    onPress={() => {
-                      setCategoryId(category._id);
-                      setShowCategoryModal(false);
-                    }}
+                    onPress={() => handleCategoryChange(category._id)}
                   >
                     <View style={[styles.categoryIconSmall, { backgroundColor: category.color }]}>
                       <Ionicons name={category.icon} size={20} color="#fff" />
@@ -442,6 +465,83 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
+      {/* MODAL DE ORÇAMENTO */}
+      <Modal
+        visible={showBudgetModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBudgetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Selecionar Orçamento
+              </Text>
+              <TouchableOpacity onPress={() => setShowBudgetModal(false)}>
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              {filteredBudgets.length === 0 ? (
+                <View style={styles.emptyCategories}>
+                  <Ionicons name="information-circle-outline" size={48} color={colors.textSecondary} />
+                  <Text style={[styles.emptyCategoriesText, { color: colors.textSecondary }]}>
+                    {categoryId 
+                      ? 'Nenhum orçamento para esta categoria'
+                      : 'Selecione uma categoria primeiro'
+                    }
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={[styles.categoryOption, { borderBottomColor: colors.border }]}
+                    onPress={() => {
+                      setBudgetId('');
+                      setShowBudgetModal(false);
+                    }}
+                  >
+                    <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
+                    <Text style={[styles.categoryOptionText, { color: colors.textSecondary }]}>
+                      Sem orçamento
+                    </Text>
+                  </TouchableOpacity>
+                  {filteredBudgets.map((budget) => (
+                    <TouchableOpacity
+                      key={budget._id}
+                      style={[styles.categoryOption, { borderBottomColor: colors.border }]}
+                      onPress={() => {
+                        setBudgetId(budget._id);
+                        setShowBudgetModal(false);
+                      }}
+                    >
+                      <View style={styles.budgetOption}>
+                        <Ionicons name="wallet" size={24} color={colors.primary} />
+                        <View style={styles.budgetOptionInfo}>
+                          <Text style={[styles.categoryOptionText, { color: colors.text }]}>
+                            {budget.name || budget.categoryId?.name}
+                          </Text>
+                          {budget.amount && (
+                            <Text style={[styles.budgetLimitText, { color: colors.textSecondary }]}>
+                              R$ {budget.amount.toFixed(2)}/mês
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      {budgetId === budget._id && (
+                        <Ionicons name="checkmark" size={24} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* MODAL DE FREQUÊNCIA */}
       <Modal
         visible={showFrequencyModal}
@@ -450,8 +550,8 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         onRequestClose={() => setShowFrequencyModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, height: '50%' }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, height: 'auto', maxHeight: '50%' }]}>
+            <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Frequência</Text>
               <TouchableOpacity onPress={() => setShowFrequencyModal(false)}>
                 <Ionicons name="close" size={28} color={colors.text} />
@@ -459,22 +559,26 @@ export default function AddTransactionScreen({ route, navigation }: any) {
             </View>
 
             <ScrollView style={styles.modalScroll}>
-              {frequencyOptions.map((option) => (
+              {[
+                { value: 'daily', label: 'Diariamente' },
+                { value: 'weekly', label: 'Semanalmente' },
+                { value: 'biweekly', label: 'Quinzenalmente' },
+                { value: 'monthly', label: 'Mensalmente' },
+                { value: 'yearly', label: 'Anualmente' },
+              ].map((freq) => (
                 <TouchableOpacity
-                  key={option.value}
+                  key={freq.value}
                   style={[styles.categoryOption, { borderBottomColor: colors.border }]}
                   onPress={() => {
-                    setFrequency(option.value as any);
+                    setFrequency(freq.value as any);
                     setShowFrequencyModal(false);
                   }}
                 >
-                  <View style={[styles.categoryIconSmall, { backgroundColor: colors.primary + '20' }]}>
-                    <Ionicons name={option.icon as any} size={20} color={colors.primary} />
-                  </View>
+                  <Ionicons name="repeat" size={24} color={colors.primary} />
                   <Text style={[styles.categoryOptionText, { color: colors.text }]}>
-                    {option.label}
+                    {freq.label}
                   </Text>
-                  {frequency === option.value && (
+                  {frequency === freq.value && (
                     <Ionicons name="checkmark" size={24} color={colors.primary} />
                   )}
                 </TouchableOpacity>
@@ -499,7 +603,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     borderBottomWidth: 1,
   },
-  headerTitle: {
+  title: {
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -513,10 +617,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 16,
   },
-  categoryCount: {
-    fontSize: 12,
-    fontWeight: 'normal',
-  },
   typeContainer: {
     flexDirection: 'row',
     gap: 12,
@@ -529,7 +629,7 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 1,
   },
   typeButtonText: {
     fontSize: 16,
@@ -561,37 +661,40 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  categoryIconSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
+  categoryInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  categoryRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  budgetAmount: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   categoryButtonText: {
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
   },
-  recurrenceSection: {
+  categoryIconSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recurrenceContainer: {
     marginTop: 24,
-    paddingTop: 24,
-    borderTopWidth: 1,
   },
   recurrenceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  recurrenceHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  recurrenceTitle: {
-    fontSize: 16,
-    fontWeight: '700',
   },
   recurrenceSubtitle: {
     fontSize: 13,
@@ -621,6 +724,7 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 12,
     marginTop: 32,
+    marginBottom: 40,
   },
   saveButtonText: {
     color: '#fff',
@@ -666,6 +770,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
+  },
+  budgetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  budgetOptionInfo: {
+    flex: 1,
+  },
+  budgetLimitText: {
+    fontSize: 12,
+    marginTop: 2,
   },
   emptyCategories: {
     alignItems: 'center',

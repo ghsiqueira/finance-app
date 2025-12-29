@@ -27,9 +27,11 @@ export default function GoalInvitesScreen({ navigation }: any) {
   const loadInvites = async () => {
     try {
       const response = await goalAPI.getInvites();
+      console.log('📥 Convites carregados:', response.data);
       setInvites(response.data);
-    } catch (error) {
-      console.error('Error loading invites:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar convites:', error);
+      console.error('Detalhes:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -37,12 +39,38 @@ export default function GoalInvitesScreen({ navigation }: any) {
 
   const handleRespond = async (goalId: string, accept: boolean) => {
     try {
+      console.log('📤 Respondendo convite...');
+      console.log('  Goal ID:', goalId);
+      console.log('  Aceitar:', accept);
+      
       setResponding(goalId);
-      await goalAPI.respondToInvite(goalId, accept);
-      Alert.alert('Sucesso', accept ? 'Convite aceito!' : 'Convite recusado');
+      const response = await goalAPI.respondToInvite(goalId, accept);
+      
+      console.log('✅ Resposta:', response.data);
+      
+      Alert.alert(
+        'Sucesso', 
+        accept ? 'Convite aceito!' : 'Convite recusado',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+      
       loadInvites();
-    } catch (error) {
-      Alert.alert('Erro', 'Falha ao responder convite');
+    } catch (error: any) {
+      console.error('❌ Erro ao responder convite:', error);
+      console.error('Response:', error.response?.data);
+      console.error('Status:', error.response?.status);
+      
+      let errorMessage = 'Falha ao responder convite';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Convite não encontrado ou já foi respondido';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Sessão expirada. Faça login novamente';
+      }
+      
+      Alert.alert('Erro', errorMessage);
     } finally {
       setResponding(null);
     }
@@ -67,7 +95,7 @@ export default function GoalInvitesScreen({ navigation }: any) {
           <View style={styles.inviteInfo}>
             <Text style={[styles.goalName, { color: colors.text }]}>{item.goalName}</Text>
             <Text style={[styles.invitedBy, { color: colors.textSecondary }]}>
-              Convidado por {item.invitedBy.name}
+              Convidado por {item.invitedBy?.name || 'Desconhecido'}
             </Text>
           </View>
         </View>
@@ -227,11 +255,11 @@ const styles = StyleSheet.create({
   amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
+    gap: 8,
     marginBottom: 8,
   },
   currentAmount: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   targetAmount: {
@@ -275,14 +303,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
-    paddingTop: 80,
+    justifyContent: 'center',
+    paddingVertical: 80,
   },
   emptyText: {
     fontSize: 16,
     marginTop: 16,
+    textAlign: 'center',
   },
 });

@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { CurrencyProvider } from './src/contexts/CurrencyContext';
-import { AchievementProvider } from './src/contexts/AchievementContext';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import AppNavigator from './src/navigation/AppNavigator';
 
@@ -22,11 +21,10 @@ export default function App() {
     <ThemeProvider>
       <CurrencyProvider>
         <AuthProvider>
-          <AchievementProvider>
-            <NavigationContainer>
-              <Navigation />
-            </NavigationContainer>
-          </AchievementProvider>
+          <NavigationContainer>
+            <Navigation />
+          </NavigationContainer>
+            
         </AuthProvider>
       </CurrencyProvider>
     </ThemeProvider>

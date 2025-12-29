@@ -225,29 +225,6 @@ export default function SettingsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* SEÇÃO: GAMIFICAÇÃO */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>GAMIFICAÇÃO</Text>
-        
-        <TouchableOpacity
-          style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
-          onPress={() => navigation.navigate('Achievements')}
-        >
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: '#f39c1220' }]}>
-              <Ionicons name="trophy" size={24} color="#f39c12" />
-            </View>
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Conquistas</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                Veja suas conquistas e marcos
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
-
       {/* Seção de Aparência */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>APARÊNCIA</Text>

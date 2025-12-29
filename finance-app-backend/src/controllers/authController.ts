@@ -7,7 +7,7 @@ import Category from '../models/Category.js';
 import Transaction from '../models/Transaction.js';
 import Budget from '../models/Budget.js';
 import Goal from '../models/Goal.js';
-import Achievement from '../models/Achievement.js';
+import { sendEmail } from '../utils/email.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -138,9 +138,20 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     console.log(`Reset code for ${email}: ${resetCode}`);
 
+    // ENVIAR EMAIL
+    try {
+      await sendEmail(
+        user.email,
+        'Código de Recuperação de Senha - Finance App',
+        `Olá ${user.name},\n\nSeu código de recuperação de senha é: ${resetCode}\n\nEste código expira em 1 hora.\n\nSe você não solicitou este código, ignore este email.\n\nEquipe Finance App`
+      );
+      console.log(`✅ Email enviado para ${user.email}`);
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email:', emailError);
+    }
+
     res.json({ 
       message: 'Código de recuperação enviado',
-      code: resetCode
     });
   } catch (error) {
     console.error('Error in forgotPassword:', error);
@@ -235,7 +246,6 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
     await Budget.deleteMany({ userId: req.userId });
     await Goal.deleteMany({ userId: req.userId });
     await Category.deleteMany({ userId: req.userId });
-    await Achievement.deleteMany({ userId: req.userId });
 
     // Deleta o usuário
     await User.findByIdAndDelete(req.userId);
