@@ -1,121 +1,161 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StatusBar } from 'react-native';
+import { useColorScheme, Appearance } from 'react-native';
 
-type Theme = 'light' | 'dark';
+type ThemeMode = 'light' | 'dark' | 'auto';
 
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  colors: Colors;
-  isDark: boolean;
-}
-
-interface Colors {
+type ColorScheme = {
+  primary: string;
+  secondary: string;
   background: string;
   card: string;
   text: string;
   textSecondary: string;
   border: string;
-  primary: string;
-  success: string;
   error: string;
+  success: string;
   warning: string;
   info: string;
-  income: string;
-  expense: string;
-  shadow: string;
-  modalOverlay: string;
-  inputBackground: string;
   placeholder: string;
-}
-
-const lightColors: Colors = {
-  background: '#f5f5f5',
-  card: '#ffffff',
-  text: '#000000',
-  textSecondary: '#666666',
-  border: '#e0e0e0',
-  primary: '#007AFF',
-  success: '#34C759',
-  error: '#FF3B30',
-  warning: '#FF9500',
-  info: '#007AFF',
-  income: '#34C759',
-  expense: '#FF3B30',
-  shadow: '#000000',
-  modalOverlay: 'rgba(0,0,0,0.5)',
-  inputBackground: '#ffffff',
-  placeholder: '#999999',
+  disabled: string;
+  shadow: string;
+  overlay: string;
 };
 
-const darkColors: Colors = {
+const lightColors: ColorScheme = {
+  primary: '#007AFF',
+  secondary: '#5856D6',
+  background: '#F2F2F7',
+  card: '#FFFFFF',
+  text: '#000000',
+  textSecondary: '#8E8E93',
+  border: '#E5E5EA',
+  error: '#FF3B30',
+  success: '#34C759',
+  warning: '#FF9500',
+  info: '#5AC8FA',
+  placeholder: '#C7C7CC',
+  disabled: '#D1D1D6',
+  shadow: 'rgba(0, 0, 0, 0.1)',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+};
+
+const darkColors: ColorScheme = {
+  primary: '#0A84FF',
+  secondary: '#5E5CE6',
   background: '#000000',
   card: '#1C1C1E',
   text: '#FFFFFF',
-  textSecondary: '#AEAEB2',
+  textSecondary: '#8E8E93',
   border: '#38383A',
-  primary: '#0A84FF',
-  success: '#30D158',
   error: '#FF453A',
+  success: '#32D74B',
   warning: '#FF9F0A',
-  info: '#0A84FF',
-  income: '#30D158',
-  expense: '#FF453A',
-  shadow: '#000000',
-  modalOverlay: 'rgba(0,0,0,0.8)',
-  inputBackground: '#2C2C2E',
+  info: '#64D2FF',
   placeholder: '#636366',
+  disabled: '#48484A',
+  shadow: 'rgba(0, 0, 0, 0.3)',
+  overlay: 'rgba(0, 0, 0, 0.7)',
 };
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+interface ThemeContextData {
+  colors: ColorScheme;
+  isDark: boolean;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  toggleTheme: () => void;
+}
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+const ThemeContext = createContext<ThemeContextData>({} as ThemeContextData);
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const systemColorScheme = useColorScheme();
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    loadTheme();
+    loadThemePreference();
   }, []);
 
   useEffect(() => {
-    StatusBar.setBarStyle(theme === 'dark' ? 'light-content' : 'dark-content');
-  }, [theme]);
+    updateTheme();
+  }, [themeMode, systemColorScheme]);
 
-  const loadTheme = async () => {
+  // 🆕 LISTENER para mudanças no sistema
+  useEffect(() => {
+    if (themeMode === 'auto') {
+      const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+        console.log('🎨 Sistema mudou para:', colorScheme);
+        setIsDark(colorScheme === 'dark');
+      });
+
+      return () => subscription.remove();
+    }
+  }, [themeMode]);
+
+  const loadThemePreference = async () => {
     try {
-      const savedTheme = await AsyncStorage.getItem('@theme');
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        setTheme(savedTheme);
+      const saved = await AsyncStorage.getItem('@theme_mode');
+      if (saved) {
+        setThemeModeState(saved as ThemeMode);
+        console.log('🎨 Tema carregado:', saved);
       }
     } catch (error) {
-      console.error('Error loading theme:', error);
+      console.error('Error loading theme preference:', error);
     }
   };
 
-  const toggleTheme = async () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
+  const updateTheme = () => {
+    if (themeMode === 'auto') {
+      const newIsDark = systemColorScheme === 'dark';
+      console.log('🎨 Modo auto - Sistema:', systemColorScheme, '→ isDark:', newIsDark);
+      setIsDark(newIsDark);
+    } else {
+      console.log('🎨 Modo manual:', themeMode);
+      setIsDark(themeMode === 'dark');
+    }
+  };
+
+  const setThemeMode = async (mode: ThemeMode) => {
     try {
-      await AsyncStorage.setItem('@theme', newTheme);
+      await AsyncStorage.setItem('@theme_mode', mode);
+      setThemeModeState(mode);
+      console.log('🎨 Tema salvo:', mode);
     } catch (error) {
-      console.error('Error saving theme:', error);
+      console.error('Error saving theme preference:', error);
     }
   };
 
-  const colors = theme === 'light' ? lightColors : darkColors;
-  const isDark = theme === 'dark';
+  const toggleTheme = () => {
+    const newMode = isDark ? 'light' : 'dark';
+    setThemeMode(newMode);
+  };
+
+  const colors = isDark ? darkColors : lightColors;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, colors, isDark }}>
+    <ThemeContext.Provider
+      value={{
+        colors,
+        isDark,
+        themeMode,
+        setThemeMode,
+        toggleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
   return context;
-};
+}

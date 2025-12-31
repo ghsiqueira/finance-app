@@ -5,26 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
   Modal,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { getCurrencyByCode } from '../types/currency';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
+import ThemeSelector from '../components/ThemeSelector';
 
 export default function SettingsScreen({ navigation }: any) {
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors } = useTheme();
   const { mainCurrency, setMainCurrency, lastUpdated } = useCurrency();
   const { user, logout } = useAuth();
 
-  // 🆕 STATES PARA EXCLUSÃO DE CONTA
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -46,7 +44,6 @@ export default function SettingsScreen({ navigation }: any) {
     );
   };
 
-  // 🆕 FUNÇÃO PARA EXCLUIR CONTA
   const handleDeleteAccount = async () => {
     if (!deletePassword.trim()) {
       Alert.alert('Erro', 'Digite sua senha para confirmar');
@@ -55,7 +52,7 @@ export default function SettingsScreen({ navigation }: any) {
 
     Alert.alert(
       '⚠️ ATENÇÃO',
-      'Esta ação é IRREVERSÍVEL!\n\nTODOS os seus dados serão PERMANENTEMENTE deletados:\n• Transações\n• Orçamentos\n• Metas\n• Categorias\n• Conquistas\n\nDeseja realmente continuar?',
+      'Esta ação é IRREVERSÍVEL!\n\nTODOS os seus dados serão PERMANENTEMENTE deletados:\n• Transações\n• Orçamentos\n• Metas\n• Categorias\n• Contas\n\nDeseja realmente continuar?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -73,7 +70,6 @@ export default function SettingsScreen({ navigation }: any) {
                   {
                     text: 'OK',
                     onPress: () => {
-                      // Usa o logout do AuthContext
                       logout();
                     }
                   }
@@ -115,7 +111,7 @@ export default function SettingsScreen({ navigation }: any) {
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>Configurações</Text>
       </View>
-
+      
       {/* Seção de Usuário */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CONTA</Text>
@@ -133,6 +129,12 @@ export default function SettingsScreen({ navigation }: any) {
             </View>
           </View>
         </View>
+      </View>
+
+      {/* 🎨 SEÇÃO: APARÊNCIA */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>APARÊNCIA</Text>
+        <ThemeSelector />
       </View>
 
       {/* Seção de Moeda */}
@@ -225,31 +227,6 @@ export default function SettingsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* Seção de Aparência */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>APARÊNCIA</Text>
-        
-        <View style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}>
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.warning + '20' }]}>
-              <Ionicons name={isDark ? 'moon' : 'sunny'} size={24} color={colors.warning} />
-            </View>
-            <View>
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Tema Escuro</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {isDark ? 'Ativado' : 'Desativado'}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={isDark}
-            onValueChange={toggleTheme}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor="#fff"
-          />
-        </View>
-      </View>
-
       {/* Seção de Dados */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>DADOS</Text>
@@ -275,7 +252,7 @@ export default function SettingsScreen({ navigation }: any) {
 
       {/* Seção de Conta */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CONTA</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OPÇÕES DE CONTA</Text>
         
         <TouchableOpacity
           style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
@@ -317,7 +294,7 @@ export default function SettingsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* 🆕 SEÇÃO: ZONA DE PERIGO */}
+      {/* SEÇÃO: ZONA DE PERIGO */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.error }]}>ZONA DE PERIGO</Text>
         
@@ -349,7 +326,7 @@ export default function SettingsScreen({ navigation }: any) {
 
       <View style={{ height: 40 }} />
 
-      {/* 🆕 MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
       <Modal
         visible={showDeleteModal}
         transparent
@@ -383,7 +360,7 @@ export default function SettingsScreen({ navigation }: any) {
                   • Todas as categorias
                 </Text>
                 <Text style={[styles.deleteListItem, { color: colors.textSecondary }]}>
-                  • Todas as conquistas
+                  • Todas as contas
                 </Text>
               </View>
 
@@ -544,7 +521,6 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 13,
   },
-  // 🆕 ESTILOS DO MODAL DE EXCLUSÃO
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
