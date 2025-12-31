@@ -24,6 +24,8 @@ import ShareGoalScreen from '../screens/ShareGoalScreen';
 import GoalInvitesScreen from '../screens/GoalInvitesScreen';
 import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen';
 import BackupScreen from '../screens/BackupScreen';
+import BillsScreen from '../screens/BillsScreen';
+import AddBillScreen from '../screens/AddBillScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -117,6 +119,15 @@ function SettingsStack() {
   );
 }
 
+function BillsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="BillsMain" component={BillsScreen} />
+      <Stack.Screen name="AddBill" component={AddBillScreen} />
+    </Stack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   const { colors } = useTheme();
 
@@ -136,6 +147,8 @@ export default function AppNavigator() {
               iconName = focused ? 'wallet' : 'wallet-outline';
             } else if (route.name === 'Goals') {
               iconName = focused ? 'flag' : 'flag-outline';
+            } else if (route.name === 'Bills') {
+              iconName = focused ? 'receipt' : 'receipt-outline';
             } else if (route.name === 'Reports') {
               iconName = focused ? 'bar-chart' : 'bar-chart-outline';
             } else if (route.name === 'Settings') {
@@ -178,6 +191,11 @@ export default function AppNavigator() {
           name="Goals" 
           component={GoalsStack}
           options={{ tabBarLabel: 'Metas' }}
+        />
+        <Tab.Screen 
+          name="Bills" 
+          component={BillsStack}
+          options={{ tabBarLabel: 'Contas' }}
         />
         <Tab.Screen 
           name="Reports" 

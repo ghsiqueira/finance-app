@@ -14,6 +14,7 @@ import exportRoutes from './routes/export.js';
 import insightsRoutes from './routes/insights.js';
 import recurrenceRoutes from './routes/recurrence.js';
 import backupRoutes from './routes/backup.js';
+import billRoutes from './routes/bills.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/recurrence', recurrenceRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/bills', billRoutes);
 
 const PORT = process.env.PORT || 3000;
 

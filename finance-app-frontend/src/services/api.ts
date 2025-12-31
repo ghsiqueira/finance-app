@@ -169,3 +169,14 @@ export const backupAPI = {
   import: (data: any, clearExisting: boolean = true) => 
     api.post('/backup/import', { data, clearExisting }),
 };
+
+export const billAPI = {
+  getAll: (params?: any) => api.get('/bills', { params }),
+  getById: (id: string) => api.get(`/bills/${id}`),
+  create: (data: any) => api.post('/bills', data),
+  update: (id: string, data: any) => api.put(`/bills/${id}`, data),
+  delete: (id: string) => api.delete(`/bills/${id}`),
+  markAsPaid: (id: string) => api.post(`/bills/${id}/pay`),
+  getUpcoming: () => api.get('/bills/upcoming'),
+  getOverdue: () => api.get('/bills/overdue'),
+};
