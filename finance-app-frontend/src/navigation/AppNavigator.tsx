@@ -23,6 +23,7 @@ import CurrencySelectionScreen from '../screens/CurrencySelectionScreen';
 import ShareGoalScreen from '../screens/ShareGoalScreen';
 import GoalInvitesScreen from '../screens/GoalInvitesScreen';
 import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen';
+import BackupScreen from '../screens/BackupScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -105,6 +106,11 @@ function SettingsStack() {
       <Stack.Screen 
         name="AddTransaction" 
         component={AddTransactionScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Backup" 
+        component={BackupScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

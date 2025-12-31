@@ -256,26 +256,18 @@ export default function SettingsScreen({ navigation }: any) {
         
         <TouchableOpacity
           style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Em breve', 'Funcionalidade de exportação será implementada em breve')}
-        >
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.info + '20' }]}>
-              <Ionicons name="download" size={24} color={colors.info} />
-            </View>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>Exportar Dados</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Em breve', 'Funcionalidade de backup será implementada em breve')}
+          onPress={() => navigation.navigate('Backup')}
         >
           <View style={styles.settingLeft}>
             <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
-              <Ionicons name="cloud-upload" size={24} color={colors.success} />
+              <Ionicons name="cloud-download" size={24} color={colors.success} />
             </View>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>Backup</Text>
+            <View>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Backup e Restore</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Exportar e importar seus dados
+              </Text>
+            </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>

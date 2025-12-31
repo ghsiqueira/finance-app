@@ -163,3 +163,9 @@ export const recurrenceAPI = {
     isBusinessDay?: boolean 
   }) => api.patch(`/recurrence/${id}/edit`, config),
 };
+
+export const backupAPI = {
+  export: () => api.get('/backup/export'),
+  import: (data: any, clearExisting: boolean = true) => 
+    api.post('/backup/import', { data, clearExisting }),
+};
