@@ -18,18 +18,32 @@ export default function QuickActions() {
       onPress: () => (navigation as any).navigate('AddTransaction')
     },
     {
-      icon: 'flag',
-      label: 'Meta',
-      color: '#34C759',
-      bgColor: '#34C75915',
-      onPress: () => (navigation as any).navigate('Goals')
-    },
-    {
       icon: 'wallet',
       label: 'Orçamento',
       color: '#FF9500',
       bgColor: '#FF950015',
-      onPress: () => (navigation as any).navigate('Budgets')
+      onPress: () => (navigation as any).navigate('BudgetsMain')
+    },
+    {
+      icon: 'flag',
+      label: 'Meta',
+      color: '#34C759',
+      bgColor: '#34C75915',
+      onPress: () => (navigation as any).navigate('GoalsMain')
+    },
+    {
+      icon: 'document-text',
+      label: 'Contas',
+      color: '#5856D6',
+      bgColor: '#5856D615',
+      onPress: () => (navigation as any).navigate('BillsMain')
+    },
+    {
+      icon: 'card',
+      label: 'Cartões',
+      color: '#0A84FF',
+      bgColor: '#0A84FF15',
+      onPress: () => (navigation as any).navigate('CreditCardsMain')
     },
     {
       icon: 'bar-chart',
@@ -83,10 +97,11 @@ const styles = StyleSheet.create({
   },
   actionsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   actionButton: {
-    flex: 1,
+    width: '30%',
     alignItems: 'center',
     justifyContent: 'center',
   },

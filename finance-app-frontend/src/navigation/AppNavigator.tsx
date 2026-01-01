@@ -26,27 +26,55 @@ import RecurringTransactionsScreen from '../screens/RecurringTransactionsScreen'
 import BackupScreen from '../screens/BackupScreen';
 import BillsScreen from '../screens/BillsScreen';
 import AddBillScreen from '../screens/AddBillScreen';
+import CreditCardsScreen from '../screens/CreditCardsScreen';
+import AddCreditCardScreen from '../screens/AddCreditCardScreen';
+import CardDetailsScreen from '../screens/CardDetailsScreen';
+import AddPurchaseScreen from '../screens/AddPurchaseScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// 🏠 HOME STACK - Inclui TUDO agora!
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
+      
+      {/* Transações */}
       <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
       <Stack.Screen name="TransactionDetails" component={TransactionDetailsScreen} />
       <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
+      
+      {/* Orçamentos */}
+      <Stack.Screen name="BudgetsMain" component={BudgetsScreen} />
       <Stack.Screen name="AddBudget" component={AddBudgetScreen} />
       <Stack.Screen name="EditBudget" component={EditBudgetScreen} />
+      
+      {/* Metas */}
+      <Stack.Screen name="GoalsMain" component={GoalsScreen} />
       <Stack.Screen name="AddGoal" component={AddGoalScreen} />
       <Stack.Screen name="EditGoal" component={EditGoalScreen} />
+      <Stack.Screen name="ShareGoal" component={ShareGoalScreen} />
+      <Stack.Screen name="GoalInvites" component={GoalInvitesScreen} />
+      
+      {/* Contas/Bills */}
+      <Stack.Screen name="BillsMain" component={BillsScreen} />
+      <Stack.Screen name="AddBill" component={AddBillScreen} />
+      
+      {/* Cartões */}
+      <Stack.Screen name="CreditCardsMain" component={CreditCardsScreen} />
+      <Stack.Screen name="AddCreditCard" component={AddCreditCardScreen} />
+      <Stack.Screen name="CardDetails" component={CardDetailsScreen} />
+      <Stack.Screen name="AddPurchase" component={AddPurchaseScreen} />
+      
+      {/* Moeda */}
       <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} />
       <Stack.Screen name="CurrencySelection" component={CurrencySelectionScreen} />
     </Stack.Navigator>
   );
 }
 
+// 📋 TRANSACTIONS STACK
 function TransactionsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -59,28 +87,7 @@ function TransactionsStack() {
   );
 }
 
-function BudgetsStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="BudgetsMain" component={BudgetsScreen} />
-      <Stack.Screen name="AddBudget" component={AddBudgetScreen} />
-      <Stack.Screen name="EditBudget" component={EditBudgetScreen} />
-    </Stack.Navigator>
-  );
-}
-
-function GoalsStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="GoalsMain" component={GoalsScreen} />
-      <Stack.Screen name="AddGoal" component={AddGoalScreen} />
-      <Stack.Screen name="EditGoal" component={EditGoalScreen} />
-      <Stack.Screen name="ShareGoal" component={ShareGoalScreen} />
-      <Stack.Screen name="GoalInvites" component={GoalInvitesScreen} />
-    </Stack.Navigator>
-  );
-}
-
+// 📊 REPORTS STACK
 function ReportsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -89,6 +96,7 @@ function ReportsStack() {
   );
 }
 
+// ⚙️ SETTINGS STACK
 function SettingsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -119,96 +127,64 @@ function SettingsStack() {
   );
 }
 
-function BillsStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="BillsMain" component={BillsScreen} />
-      <Stack.Screen name="AddBill" component={AddBillScreen} />
-    </Stack.Navigator>
-  );
-}
-
 export default function AppNavigator() {
   const { colors } = useTheme();
 
   return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: any;
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: any;
 
-            if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Transactions') {
-              iconName = focused ? 'list' : 'list-outline';
-            } else if (route.name === 'Budgets') {
-              iconName = focused ? 'wallet' : 'wallet-outline';
-            } else if (route.name === 'Goals') {
-              iconName = focused ? 'flag' : 'flag-outline';
-            } else if (route.name === 'Bills') {
-              iconName = focused ? 'receipt' : 'receipt-outline';
-            } else if (route.name === 'Reports') {
-              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-            } else if (route.name === 'Settings') {
-              iconName = focused ? 'settings' : 'settings-outline';
-            }
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Transactions') {
+            iconName = focused ? 'list' : 'list-outline';
+          } else if (route.name === 'Reports') {
+            iconName = focused ? 'bar-chart' : 'bar-chart-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textSecondary,
-          tabBarStyle: {
-            backgroundColor: colors.card,
-            borderTopColor: colors.border,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-        })}
-      >
-        <Tab.Screen 
-          name="Home" 
-          component={HomeStack}
-          options={{ tabBarLabel: 'Início' }}
-        />
-        <Tab.Screen 
-          name="Transactions" 
-          component={TransactionsStack}
-          options={{ tabBarLabel: 'Transações' }}
-        />
-        <Tab.Screen 
-          name="Budgets" 
-          component={BudgetsStack}
-          options={{ tabBarLabel: 'Orçamentos' }}
-        />
-        <Tab.Screen 
-          name="Goals" 
-          component={GoalsStack}
-          options={{ tabBarLabel: 'Metas' }}
-        />
-        <Tab.Screen 
-          name="Bills" 
-          component={BillsStack}
-          options={{ tabBarLabel: 'Contas' }}
-        />
-        <Tab.Screen 
-          name="Reports" 
-          component={ReportsStack}
-          options={{ tabBarLabel: 'Relatórios' }}
-        />
-        <Tab.Screen 
-          name="Settings" 
-          component={SettingsStack}
-          options={{ tabBarLabel: 'Ajustes' }}
-        />
-      </Tab.Navigator>
-      
-    </View>
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      })}
+    >
+      {/* ✅ APENAS 4 TABS */}
+      <Tab.Screen 
+        name="Home" 
+        component={HomeStack}
+        options={{ tabBarLabel: 'Início' }}
+      />
+      <Tab.Screen 
+        name="Transactions" 
+        component={TransactionsStack}
+        options={{ tabBarLabel: 'Transações' }}
+      />
+      <Tab.Screen 
+        name="Reports" 
+        component={ReportsStack}
+        options={{ tabBarLabel: 'Relatórios' }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsStack}
+        options={{ tabBarLabel: 'Ajustes' }}
+      />
+    </Tab.Navigator>
   );
 }

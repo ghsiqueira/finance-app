@@ -20,6 +20,9 @@ type ColorScheme = {
   disabled: string;
   shadow: string;
   overlay: string;
+  income: string;        // 🆕 ADICIONAR
+  expense: string;       // 🆕 ADICIONAR
+  modalOverlay: string;  // 🆕 ADICIONAR
 };
 
 const lightColors: ColorScheme = {
@@ -38,6 +41,9 @@ const lightColors: ColorScheme = {
   disabled: '#D1D1D6',
   shadow: 'rgba(0, 0, 0, 0.1)',
   overlay: 'rgba(0, 0, 0, 0.5)',
+  income: '#34C759',        // 🆕 Verde para receitas
+  expense: '#FF3B30',       // 🆕 Vermelho para despesas
+  modalOverlay: 'rgba(0, 0, 0, 0.5)', // 🆕 Overlay de modais
 };
 
 const darkColors: ColorScheme = {
@@ -56,6 +62,9 @@ const darkColors: ColorScheme = {
   disabled: '#48484A',
   shadow: 'rgba(0, 0, 0, 0.3)',
   overlay: 'rgba(0, 0, 0, 0.7)',
+  income: '#5DD97C',        // 🆕 Verde claro para receitas
+  expense: '#FF6961',       // 🆕 Vermelho claro para despesas
+  modalOverlay: 'rgba(0, 0, 0, 0.7)', // 🆕 Overlay de modais
 };
 
 interface ThemeContextData {
@@ -85,7 +94,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     updateTheme();
   }, [themeMode, systemColorScheme]);
 
-  // 🆕 LISTENER para mudanças no sistema
   useEffect(() => {
     if (themeMode === 'auto') {
       const subscription = Appearance.addChangeListener(({ colorScheme }) => {

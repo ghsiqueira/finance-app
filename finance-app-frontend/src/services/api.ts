@@ -180,3 +180,21 @@ export const billAPI = {
   getUpcoming: () => api.get('/bills/upcoming'),
   getOverdue: () => api.get('/bills/overdue'),
 };
+
+export const creditCardAPI = {
+  getDashboard: () => api.get('/credit-cards/dashboard'),
+
+  getAll: () => api.get('/credit-cards'),
+  getById: (id: string) => api.get(`/credit-cards/${id}`),
+  create: (data: any) => api.post('/credit-cards', data),
+  update: (id: string, data: any) => api.put(`/credit-cards/${id}`, data),
+  delete: (id: string) => api.delete(`/credit-cards/${id}`),
+
+  addPurchase: (data: any) => api.post('/credit-cards/purchases', data),
+  getPurchases: (cardId: string, params?: any) => 
+    api.get(`/credit-cards/${cardId}/purchases`, { params }),
+
+  getInvoices: (cardId: string) => api.get(`/credit-cards/${cardId}/invoices`),
+  payInvoice: (cardId: string, invoiceMonth: string) => 
+    api.post(`/credit-cards/${cardId}/pay-invoice`, { invoiceMonth }),
+};

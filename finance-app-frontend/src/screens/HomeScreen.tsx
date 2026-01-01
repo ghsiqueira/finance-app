@@ -23,6 +23,7 @@ import AlertsSection from '../components/AlertsSection';
 import QuickActions from '../components/QuickActions';
 import InsightsSection from '../components/InsightsSection';
 import { useFocusEffect } from '@react-navigation/native';
+import CreditCardsCarousel from '../components/CreditCardsCarousel';
 
 export default function HomeScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -35,7 +36,6 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadDashboard = async () => {
     try {
-      // 🆕 LOGS DE DEBUG
       console.log('📊 === LOADING DASHBOARD ===');
       
       const token = await AsyncStorage.getItem('@token');
@@ -252,6 +252,9 @@ export default function HomeScreen({ navigation }: any) {
               categories={dashboardData.topCategories}
               allCategories={dashboardData.allCategories}
               totalExpenses={dashboardData.monthSummary.expenses}
+              limit={3}
+              showViewAll={true}
+              hideChart={true}
             />
           </View>
         )}
@@ -261,11 +264,16 @@ export default function HomeScreen({ navigation }: any) {
           <GoalsCarousel goals={dashboardData.goalsProgress} />
         )}
 
+        {/* CARTÕES DE CRÉDITO */}
+        {dashboardData?.creditCards && dashboardData.creditCards.length > 0 && (
+          <CreditCardsCarousel cards={dashboardData.creditCards} />
+        )}
+
         {/* TRANSAÇÕES RECENTES */}
         {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 && (
           <View style={[styles.transactionsCard, { backgroundColor: colors.card }]}>
             <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>💳 Recentes</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Transações Recentes</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
                 <Text style={[styles.seeAllText, { color: colors.primary }]}>Ver todas</Text>
               </TouchableOpacity>

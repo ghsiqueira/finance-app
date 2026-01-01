@@ -5,6 +5,8 @@ import Budget from '../models/Budget.js';
 import Goal from '../models/Goal.js';
 import Category from '../models/Category.js';
 import User from '../models/User.js';
+import CreditCard from '../models/CreditCard.js'; // 🆕 ADICIONAR
+import Purchase from '../models/Purchase.js'; // 🆕 ADICIONAR
 
 export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
   try {
@@ -237,6 +239,46 @@ export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
 
     console.log('Recent transactions:', recentTransactions.length);
 
+    // ===== 🆕 CARTÕES DE CRÉDITO =====
+    console.log('\n=== CREDIT CARDS ===');
+    const creditCards = await CreditCard.find({
+      userId: req.userId,
+      isActive: true,
+    }).sort({ createdAt: -1 }).limit(5);
+
+    console.log('Active credit cards:', creditCards.length);
+
+    // Calcular saldo de cada cartão
+    const creditCardsWithBalance = await Promise.all(
+      creditCards.map(async (card) => {
+        const purchases = await Purchase.find({
+          userId: req.userId,
+          creditCardId: card._id,
+          status: 'pending',
+        } as any);
+
+        const used = purchases.reduce((sum: number, p: any) => sum + p.amount, 0);
+        const available = card.limit - used;
+
+        return {
+          id: card._id.toString(),
+          name: card.name,
+          brand: card.brand,
+          color: card.color,
+          limit: card.limit,
+          used,
+          available,
+          usagePercentage: (used / card.limit) * 100,
+          lastFourDigits: card.lastFourDigits,
+          closingDay: card.closingDay,
+          dueDay: card.dueDay,
+        };
+      })
+    );
+
+    console.log('Credit cards with balance:', creditCardsWithBalance.length);
+    // ===== FIM CARTÕES =====
+
     const summary = {
       monthSummary: {
         month: now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
@@ -253,6 +295,7 @@ export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
       goalsProgress,
       pendingInvitesCount,
       recentTransactions,
+      creditCards: creditCardsWithBalance, // 🆕 ADICIONAR AQUI
       stats: {
         totalTransactions: currentMonthTransactions.length,
         averageExpense: currentMonthTransactions.filter(t => t.type === 'expense').length > 0
@@ -269,6 +312,7 @@ export const getDashboardSummary = async (req: AuthRequest, res: Response) => {
     console.log('Budget Alerts Count:', budgetAlerts.length);
     console.log('Goals Progress Count:', goalsProgress.length);
     console.log('Recent Transactions Count:', recentTransactions.length);
+    console.log('Credit Cards Count:', creditCardsWithBalance.length); // 🆕 LOG
     console.log('===========================\n');
 
     res.json(summary);

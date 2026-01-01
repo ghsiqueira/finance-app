@@ -8,12 +8,12 @@ import {
   RefreshControl,
   Dimensions,
   TouchableOpacity,
-  Modal
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../contexts/ThemeContext';
-import { transactionAPI, categoryAPI } from '../services/api';
+import { transactionAPI, categoryAPI, creditCardAPI } from '../services/api';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -23,6 +23,7 @@ export default function ReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [creditCardsData, setCreditCardsData] = useState<any>(null);
   
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'current' | 'last3' | 'last6' | 'year'>('current');
@@ -45,12 +46,15 @@ export default function ReportsScreen() {
         }
       }
 
-      const [reportResponse, catResponse] = await Promise.all([
+      const [reportResponse, catResponse, cardsResponse] = await Promise.all([
         transactionAPI.getReports(params),
-        categoryAPI.getAll()
+        categoryAPI.getAll(),
+        creditCardAPI.getDashboard().catch(() => ({ data: null })),
       ]);
+      
       setReportData(reportResponse.data);
       setCategories(catResponse.data);
+      setCreditCardsData(cardsResponse.data);
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
@@ -67,7 +71,9 @@ export default function ReportsScreen() {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -102,11 +108,11 @@ export default function ReportsScreen() {
     if (balance < 0) {
       return `⚠️ Atenção! Você gastou R$ ${Math.abs(balance).toFixed(2)} a mais do que ganhou este mês.`;
     } else if (savingsRate >= 20) {
-      return `🎉 Parabéns! Você economizou ${savingsRate.toFixed(0)}% da sua renda este mês!`;
+      return `🎉 Excelente! Você economizou ${savingsRate.toFixed(0)}% da sua renda este mês!`;
     } else if (savingsRate >= 10) {
-      return `👍 Bom trabalho! Você economizou ${savingsRate.toFixed(0)}% da sua renda este mês.`;
+      return `👍 Bom trabalho! Você economizou ${savingsRate.toFixed(0)}% da sua renda.`;
     } else if (savingsRate > 0) {
-      return `💡 Você economizou ${savingsRate.toFixed(0)}% da sua renda. Tente aumentar para 20%!`;
+      return `💡 Você economizou ${savingsRate.toFixed(0)}%. Tente alcançar 20%!`;
     }
     return '📊 Continue acompanhando seus gastos!';
   };
@@ -135,6 +141,9 @@ export default function ReportsScreen() {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary, marginTop: 16 }]}>
+          Carregando relatórios...
+        </Text>
       </View>
     );
   }
@@ -143,8 +152,10 @@ export default function ReportsScreen() {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <Ionicons name="bar-chart-outline" size={64} color={colors.border} />
-        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Sem dados para exibir</Text>
-        <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+        <Text style={[styles.emptyText, { color: colors.text, marginTop: 16 }]}>
+          Sem dados para exibir
+        </Text>
+        <Text style={[styles.emptySubtext, { color: colors.textSecondary, marginTop: 8 }]}>
           Adicione transações para ver seus relatórios
         </Text>
       </View>
@@ -210,12 +221,20 @@ export default function ReportsScreen() {
   return (
     <ScrollView 
       style={[styles.container, { backgroundColor: colors.background }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      refreshControl={
+        <RefreshControl 
+          refreshing={refreshing} 
+          onRefresh={onRefresh} 
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
     >
+      {/* HEADER */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={[styles.title, { color: colors.text }]}>Relatórios</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Análise financeira</Text>
+          <Text style={[styles.title, { color: colors.text }]}>📊 Relatórios</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Análise financeira completa</Text>
         </View>
         <TouchableOpacity 
           style={styles.filterButton}
@@ -230,10 +249,12 @@ export default function ReportsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* INSIGHT PRINCIPAL */}
       <View style={[styles.insightCard, { backgroundColor: colors.primary + '20', borderLeftColor: colors.primary }]}>
         <Text style={[styles.insightText, { color: colors.primary }]}>{getInsight()}</Text>
       </View>
 
+      {/* RESUMO DO MÊS */}
       <View style={styles.statsGrid}>
         <View style={[styles.statCard, styles.incomeCard, { backgroundColor: colors.card, borderLeftColor: colors.income }]}>
           <View style={styles.statIconContainer}>
@@ -282,6 +303,102 @@ export default function ReportsScreen() {
         </View>
       </View>
 
+      {/* 💳 CARTÕES DE CRÉDITO */}
+      {creditCardsData && creditCardsData.cards && creditCardsData.cards.length > 0 && (
+        <View style={[styles.creditCardsCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>💳 Cartões de Crédito</Text>
+          
+          <View style={styles.creditCardsStats}>
+            <View style={styles.creditStatItem}>
+              <Text style={[styles.creditStatLabel, { color: colors.textSecondary }]}>
+                Limite Total
+              </Text>
+              <Text style={[styles.creditStatValue, { color: colors.text }]}>
+                {formatCurrency(creditCardsData.totalLimit)}
+              </Text>
+            </View>
+            
+            <View style={styles.creditStatItem}>
+              <Text style={[styles.creditStatLabel, { color: colors.textSecondary }]}>
+                Usado
+              </Text>
+              <Text style={[styles.creditStatValue, { color: colors.expense }]}>
+                {formatCurrency(creditCardsData.totalUsed)}
+              </Text>
+            </View>
+            
+            <View style={styles.creditStatItem}>
+              <Text style={[styles.creditStatLabel, { color: colors.textSecondary }]}>
+                Disponível
+              </Text>
+              <Text style={[styles.creditStatValue, { color: colors.success }]}>
+                {formatCurrency(creditCardsData.totalAvailable)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Barra de progresso */}
+          <View style={styles.creditProgressContainer}>
+            <View style={[styles.creditProgressBar, { backgroundColor: colors.border }]}>
+              <View 
+                style={[
+                  styles.creditProgressFill, 
+                  { 
+                    width: `${Math.min(creditCardsData.usagePercentage, 100)}%`,
+                    backgroundColor: creditCardsData.usagePercentage > 80 
+                      ? colors.error 
+                      : creditCardsData.usagePercentage > 50 
+                      ? colors.warning 
+                      : colors.success
+                  }
+                ]} 
+              />
+            </View>
+            <Text style={[styles.creditProgressText, { color: colors.textSecondary }]}>
+              {creditCardsData.usagePercentage.toFixed(1)}% do limite usado
+            </Text>
+          </View>
+
+          {/* Lista de cartões */}
+          <View style={styles.creditCardsList}>
+            {creditCardsData.cards.slice(0, 3).map((card: any, index: number) => (
+              <View 
+                key={card.id}
+                style={[
+                  styles.creditCardItem,
+                  index < creditCardsData.cards.slice(0, 3).length - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border
+                  }
+                ]}
+              >
+                <View style={[styles.creditCardColor, { backgroundColor: card.color }]} />
+                <View style={styles.creditCardInfo}>
+                  <Text style={[styles.creditCardName, { color: colors.text }]}>
+                    {card.name}
+                  </Text>
+                  <Text style={[styles.creditCardLimit, { color: colors.textSecondary }]}>
+                    {formatCurrency(card.used)} / {formatCurrency(card.limit)}
+                  </Text>
+                </View>
+                <View style={styles.creditCardPercentage}>
+                  <Text style={[styles.creditCardPercent, { 
+                    color: card.usagePercentage > 80 
+                      ? colors.error 
+                      : card.usagePercentage > 50 
+                      ? colors.warning 
+                      : colors.success 
+                  }]}>
+                    {card.usagePercentage.toFixed(0)}%
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* TOP CATEGORIA */}
       {topCategory && (
         <View style={[styles.highlightCard, { backgroundColor: colors.card }]}>
           <View style={styles.highlightHeader}>
@@ -303,6 +420,7 @@ export default function ReportsScreen() {
         </View>
       )}
 
+      {/* GRÁFICO DE PIZZA */}
       {pieData.length > 0 && (
         <View style={[styles.chartCard, { backgroundColor: colors.card }]}>
           <View style={styles.chartHeader}>
@@ -418,6 +536,7 @@ export default function ReportsScreen() {
         </View>
       </View>
 
+      {/* GRÁFICO DE LINHA */}
       <View style={[styles.chartCard, { backgroundColor: colors.card }]}>
         <View style={styles.chartHeader}>
           <View style={styles.chartTitleRow}>
@@ -458,7 +577,7 @@ export default function ReportsScreen() {
           />
         </View>
         
-        {/* Tabela de detalhes do saldo */}
+        {/* Tabela de detalhes do saldo - SEM INFINITO */}
         <View style={[styles.balanceDetailsTable, { borderTopColor: colors.border }]}>
           <View style={[styles.tableHeader, { borderBottomColor: colors.primary }]}>
             <Text style={[styles.tableHeaderText, { color: colors.primary }]}>Mês</Text>
@@ -469,9 +588,22 @@ export default function ReportsScreen() {
             const previousBalance = index > 0 ? reportData.last6Months[index - 1].balance : null;
             const growth = previousBalance !== null ? item.balance - previousBalance : 0;
             
-            let growthPercent = 0;
-            if (previousBalance !== null && previousBalance !== 0) {
-              growthPercent = (growth / Math.abs(previousBalance)) * 100;
+            // 🔧 CÁLCULO CORRETO
+            let growthText = '';
+            let showGrowth = false;
+            
+            if (previousBalance !== null) {
+              // Caso: anterior era 0 - NÃO MOSTRAR %
+              if (previousBalance === 0) {
+                growthText = ''; // Sem % quando anterior é 0
+                showGrowth = true;
+              }
+              // Caso normal: calcular %
+              else {
+                const growthPercent = (growth / Math.abs(previousBalance)) * 100;
+                growthText = `(${growthPercent >= 0 ? '+' : ''}${growthPercent.toFixed(1)}%)`;
+                showGrowth = true;
+              }
             }
             
             return (
@@ -483,7 +615,7 @@ export default function ReportsScreen() {
                   {formatCurrency(item.balance)}
                 </Text>
                 <View style={styles.growthCell}>
-                  {index > 0 ? (
+                  {showGrowth ? (
                     <>
                       <Ionicons 
                         name={growth >= 0 ? 'trending-up' : 'trending-down'} 
@@ -493,9 +625,11 @@ export default function ReportsScreen() {
                       <Text style={[styles.growthText, { color: growth >= 0 ? colors.income : colors.expense }]}>
                         {growth >= 0 ? '+' : ''}{formatCurrency(growth)}
                       </Text>
-                      <Text style={[styles.growthPercent, { color: growth >= 0 ? colors.income : colors.expense }]}>
-                        ({growthPercent >= 0 ? '+' : ''}{Math.abs(growthPercent).toFixed(1)}%)
-                      </Text>
+                      {growthText !== '' && (
+                        <Text style={[styles.growthPercent, { color: growth >= 0 ? colors.income : colors.expense }]}>
+                          {growthText}
+                        </Text>
+                      )}
                     </>
                   ) : (
                     <Text style={[styles.growthText, { color: colors.textSecondary }]}>-</Text>
@@ -507,6 +641,166 @@ export default function ReportsScreen() {
         </View>
       </View>
 
+      {/* 📈 ESTATÍSTICAS AVANÇADAS */}
+      <View style={[styles.advancedStatsCard, { backgroundColor: colors.card }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>📈 Análise dos Últimos 6 Meses</Text>
+        
+        {(() => {
+          // Calcular estatísticas
+          const balances = reportData.last6Months.map((m: any) => m.balance);
+          const bestMonth = reportData.last6Months.reduce((prev: any, curr: any) => 
+            curr.balance > prev.balance ? curr : prev
+          );
+          const worstMonth = reportData.last6Months.reduce((prev: any, curr: any) => 
+            curr.balance < prev.balance ? curr : prev
+          );
+          const avgBalance = balances.reduce((sum: number, val: number) => sum + val, 0) / balances.length;
+          
+          // Calcular tendência (últimos 3 meses vs primeiros 3 meses)
+          const firstHalf = balances.slice(0, 3).reduce((sum: number, val: number) => sum + val, 0) / 3;
+          const secondHalf = balances.slice(3, 6).reduce((sum: number, val: number) => sum + val, 0) / 3;
+          const trend = secondHalf - firstHalf;
+          const trendPercent = firstHalf !== 0 ? (trend / Math.abs(firstHalf)) * 100 : 0;
+          
+          return (
+            <>
+              <View style={styles.statsRow}>
+                <View style={styles.statBlock}>
+                  <Text style={[styles.statBlockLabel, { color: colors.textSecondary }]}>
+                    Melhor Mês
+                  </Text>
+                  <Text style={[styles.statBlockMonth, { color: colors.text }]}>
+                    {bestMonth.month.charAt(0).toUpperCase() + bestMonth.month.slice(1)}
+                  </Text>
+                  <Text style={[styles.statBlockValue, { color: colors.success }]}>
+                    {formatCurrency(bestMonth.balance)}
+                  </Text>
+                </View>
+                
+                <View style={[styles.statBlockDivider, { backgroundColor: colors.border }]} />
+                
+                <View style={styles.statBlock}>
+                  <Text style={[styles.statBlockLabel, { color: colors.textSecondary }]}>
+                    Pior Mês
+                  </Text>
+                  <Text style={[styles.statBlockMonth, { color: colors.text }]}>
+                    {worstMonth.month.charAt(0).toUpperCase() + worstMonth.month.slice(1)}
+                  </Text>
+                  <Text style={[styles.statBlockValue, { color: colors.error }]}>
+                    {formatCurrency(worstMonth.balance)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.avgBalanceContainer, { backgroundColor: colors.background }]}>
+                <Ionicons name="calculator" size={20} color={colors.primary} />
+                <View style={styles.avgBalanceInfo}>
+                  <Text style={[styles.avgBalanceLabel, { color: colors.textSecondary }]}>
+                    Saldo Médio
+                  </Text>
+                  <Text style={[styles.avgBalanceValue, { color: colors.text }]}>
+                    {formatCurrency(avgBalance)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.trendContainer, { 
+                backgroundColor: trend >= 0 ? colors.success + '15' : colors.error + '15',
+                borderLeftColor: trend >= 0 ? colors.success : colors.error
+              }]}>
+                <Ionicons 
+                  name={trend >= 0 ? 'trending-up' : 'trending-down'} 
+                  size={24} 
+                  color={trend >= 0 ? colors.success : colors.error} 
+                />
+                <View style={styles.trendInfo}>
+                  <Text style={[styles.trendLabel, { color: colors.textSecondary }]}>
+                    Tendência (últimos 3 meses)
+                  </Text>
+                  <Text style={[styles.trendValue, { color: trend >= 0 ? colors.success : colors.error }]}>
+                    {trend >= 0 ? '+' : ''}{formatCurrency(trend)} ({trendPercent >= 0 ? '+' : ''}{trendPercent.toFixed(1)}%)
+                  </Text>
+                </View>
+              </View>
+            </>
+          );
+        })()}
+      </View>
+
+      {/* 🎯 PREVISÃO DO PRÓXIMO MÊS */}
+      {(() => {
+        // Calcular previsão simples (média dos últimos 3 meses)
+        const lastThreeBalances = reportData.last6Months.slice(-3).map((m: any) => m.balance);
+        const avgLastThree = lastThreeBalances.reduce((sum: number, val: number) => sum + val, 0) / 3;
+        
+        const lastThreeIncomes = reportData.last6Months.slice(-3).map((m: any) => m.income);
+        const avgIncome = lastThreeIncomes.reduce((sum: number, val: number) => sum + val, 0) / 3;
+        
+        const lastThreeExpenses = reportData.last6Months.slice(-3).map((m: any) => m.expenses);
+        const avgExpense = lastThreeExpenses.reduce((sum: number, val: number) => sum + val, 0) / 3;
+        
+        const predictedBalance = avgIncome - avgExpense;
+        
+        return (
+          <View style={[styles.predictionCard, { backgroundColor: colors.card }]}>
+            <View style={styles.predictionHeader}>
+              <Ionicons name="bulb-outline" size={24} color={colors.warning} />
+              <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                🔮 Previsão para o Próximo Mês
+              </Text>
+            </View>
+            
+            <Text style={[styles.predictionSubtitle, { color: colors.textSecondary }]}>
+              Baseado na média dos últimos 3 meses
+            </Text>
+            
+            <View style={styles.predictionStats}>
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textSecondary }]}>
+                  Receita Esperada
+                </Text>
+                <Text style={[styles.predictionValue, { color: colors.income }]}>
+                  {formatCurrency(avgIncome)}
+                </Text>
+              </View>
+              
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textSecondary }]}>
+                  Despesa Esperada
+                </Text>
+                <Text style={[styles.predictionValue, { color: colors.expense }]}>
+                  {formatCurrency(avgExpense)}
+                </Text>
+              </View>
+              
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textSecondary }]}>
+                  Saldo Previsto
+                </Text>
+                <Text style={[styles.predictionValue, { 
+                  color: predictedBalance >= 0 ? colors.success : colors.error 
+                }]}>
+                  {formatCurrency(predictedBalance)}
+                </Text>
+              </View>
+            </View>
+            
+            {predictedBalance < 0 && (
+              <View style={[styles.predictionWarning, { 
+                backgroundColor: colors.error + '15',
+                borderColor: colors.error
+              }]}>
+                <Ionicons name="warning" size={20} color={colors.error} />
+                <Text style={[styles.predictionWarningText, { color: colors.error }]}>
+                  Atenção! Previsão indica saldo negativo. Considere reduzir despesas.
+                </Text>
+              </View>
+            )}
+          </View>
+        );
+      })()}
+
+      {/* MODAL DE FILTROS */}
       <Modal
         visible={filterModalVisible}
         animationType="slide"
@@ -617,6 +911,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -702,6 +1000,88 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  creditCardsCard: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  creditCardsStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  creditStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  creditStatLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  creditStatValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  creditProgressContainer: {
+    marginBottom: 20,
+  },
+  creditProgressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  creditProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  creditProgressText: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  creditCardsList: {
+    gap: 0,
+  },
+  creditCardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  creditCardColor: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+    marginRight: 12,
+  },
+  creditCardInfo: {
+    flex: 1,
+  },
+  creditCardName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  creditCardLimit: {
+    fontSize: 13,
+  },
+  creditCardPercentage: {
+    alignItems: 'flex-end',
+  },
+  creditCardPercent: {
+    fontSize: 16,
     fontWeight: 'bold',
   },
   highlightCard: {
@@ -933,14 +1313,141 @@ const styles = StyleSheet.create({
   growthPercent: {
     fontSize: 11,
   },
+  // 🆕 NOVOS ESTILOS
+  advancedStatsCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  statBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statBlockDivider: {
+    width: 1,
+    marginHorizontal: 12,
+  },
+  statBlockLabel: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  statBlockMonth: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statBlockValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  avgBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 12,
+  },
+  avgBalanceInfo: {
+    flex: 1,
+  },
+  avgBalanceLabel: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  avgBalanceValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    gap: 12,
+  },
+  trendInfo: {
+    flex: 1,
+  },
+  trendLabel: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  trendValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  predictionCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  predictionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  predictionSubtitle: {
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  predictionStats: {
+    gap: 16,
+  },
+  predictionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  predictionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  predictionValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  predictionWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    borderWidth: 1,
+  },
+  predictionWarningText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    marginTop: 8,
     textAlign: 'center',
   },
   modalOverlay: {
