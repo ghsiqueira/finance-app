@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url'; // 🆕 ADICIONAR
 import { connectDB } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import transactionRoutes from './routes/transactions.js';
@@ -19,6 +21,10 @@ import creditCardRoutes from './routes/creditCards.js';
 
 dotenv.config();
 
+// 🆕 CONFIGURAR __dirname PARA ES MODULES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 app.use(cors());
@@ -26,6 +32,10 @@ app.use(express.json());
 
 connectDB();
 
+// 🆕 SERVIR FOTOS DE PERFIL (ANTES DAS ROTAS)
+app.use('/uploads/profiles', express.static(path.join(__dirname, '../uploads/profiles')));
+
+// ROTAS
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);

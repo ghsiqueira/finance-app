@@ -30,6 +30,8 @@ import CreditCardsScreen from '../screens/CreditCardsScreen';
 import AddCreditCardScreen from '../screens/AddCreditCardScreen';
 import CardDetailsScreen from '../screens/CardDetailsScreen';
 import AddPurchaseScreen from '../screens/AddPurchaseScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -123,6 +125,8 @@ function SettingsStack() {
         component={BackupScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
     </Stack.Navigator>
   );
 }

@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
       <TextInput
         style={[styles.input, { 
           borderColor: colors.border, 
-          backgroundColor: colors.inputBackground,
+          backgroundColor: colors.card,
           color: colors.text 
         }]}
         placeholder="Email"

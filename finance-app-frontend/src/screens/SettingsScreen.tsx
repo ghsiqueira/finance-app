@@ -17,6 +17,8 @@ import { getCurrencyByCode } from '../types/currency';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 import ThemeSelector from '../components/ThemeSelector';
+import { Image } from 'react-native'; 
+import { API_URL } from '../services/api';
 
 export default function SettingsScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -118,11 +120,20 @@ export default function SettingsScreen({ navigation }: any) {
         
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.userInfo}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </Text>
-            </View>
+            {/* FOTO DE PERFIL */}
+            {user?.profilePhoto ? (
+              <Image
+                source={{ uri: `${API_URL.replace('/api', '')}/uploads/profiles/${user.profilePhoto}` }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                <Text style={styles.avatarText}>
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
+            
             <View style={styles.userDetails}>
               <Text style={[styles.userName, { color: colors.text }]}>{user?.name}</Text>
               <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
@@ -254,9 +265,10 @@ export default function SettingsScreen({ navigation }: any) {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OPÇÕES DE CONTA</Text>
         
+        {/* Editar Perfil */}
         <TouchableOpacity
           style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Em breve', 'Funcionalidade será implementada em breve')}
+          onPress={() => navigation.navigate('EditProfile')}
         >
           <View style={styles.settingLeft}>
             <View style={[styles.iconContainer, { backgroundColor: colors.textSecondary + '20' }]}>
@@ -267,9 +279,10 @@ export default function SettingsScreen({ navigation }: any) {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
+        {/* Alterar Senha */}
         <TouchableOpacity
           style={[styles.card, styles.settingItem, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Em breve', 'Funcionalidade será implementada em breve')}
+          onPress={() => navigation.navigate('ChangePassword')}
         >
           <View style={styles.settingLeft}>
             <View style={[styles.iconContainer, { backgroundColor: colors.textSecondary + '20' }]}>
@@ -586,5 +599,10 @@ const styles = StyleSheet.create({
   deleteModalButtonText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
 });

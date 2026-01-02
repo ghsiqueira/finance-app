@@ -8,6 +8,13 @@ import Transaction from '../models/Transaction.js';
 import Budget from '../models/Budget.js';
 import Goal from '../models/Goal.js';
 import { sendEmail } from '../utils/email.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// 🆕 CONFIGURAR __dirname PARA ES MODULES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -75,6 +82,7 @@ export const register = async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePhoto: user.profilePhoto || null,
       },
     });
   } catch (error) {
@@ -109,6 +117,7 @@ export const login = async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePhoto: user.profilePhoto || null,
       },
     });
   } catch (error) {
@@ -241,6 +250,15 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
 
     console.log(`🗑️ Deletando conta do usuário: ${user.email}`);
 
+    // Deletar foto de perfil se existir
+    if (user.profilePhoto) {
+      const photoPath = path.join(__dirname, '../../uploads/profiles', user.profilePhoto);
+      if (fs.existsSync(photoPath)) {
+        fs.unlinkSync(photoPath);
+        console.log(`🗑️ Foto de perfil deletada: ${user.profilePhoto}`);
+      }
+    }
+
     // Deleta todos os dados relacionados
     await Transaction.deleteMany({ userId: req.userId });
     await Budget.deleteMany({ userId: req.userId });
@@ -256,5 +274,214 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error deleting account:', error);
     res.status(500).json({ message: 'Erro ao deletar conta' });
+  }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const { name, email } = req.body;
+
+    // Validações
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Nome e email são obrigatórios' });
+    }
+
+    // Buscar usuário atual
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Verificar se o email já está em uso por outro usuário
+    if (email.toLowerCase() !== currentUser.email.toLowerCase()) {
+      const existingUser = await User.findOne({ 
+        email: email.toLowerCase(),
+        _id: { $ne: req.userId }
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este email já está em uso' });
+      }
+    }
+
+    // Atualizar usuário
+    const updatedUser = await User.findByIdAndUpdate(
+      req.userId,
+      { 
+        name, 
+        email: email.toLowerCase() 
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    console.log(`✅ Perfil atualizado: ${updatedUser.email}`);
+
+    res.json({
+      message: 'Perfil atualizado com sucesso',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        profilePhoto: updatedUser.profilePhoto || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Erro ao atualizar perfil' });
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Validações
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Senha atual e nova senha são obrigatórias' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'A nova senha deve ter pelo menos 6 caracteres' });
+    }
+
+    // Buscar usuário
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Verificar senha atual
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Senha atual incorreta' });
+    }
+
+    // Verificar se a nova senha é diferente
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ message: 'A nova senha deve ser diferente da atual' });
+    }
+
+    // Hash da nova senha
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Atualizar senha
+    user.password = hashedPassword;
+    await user.save();
+
+    console.log(`✅ Senha alterada: ${user.email}`);
+
+    res.json({ message: 'Senha alterada com sucesso' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ message: 'Erro ao alterar senha' });
+  }
+};
+
+export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhuma imagem foi enviada' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Deletar foto antiga se existir
+    if (user.profilePhoto) {
+      const oldPhotoPath = path.join(__dirname, '../../uploads/profiles', user.profilePhoto);
+      if (fs.existsSync(oldPhotoPath)) {
+        fs.unlinkSync(oldPhotoPath);
+        console.log(`🗑️ Foto antiga deletada: ${user.profilePhoto}`);
+      }
+    }
+
+    // Atualizar com nova foto
+    const photoFilename = req.file.filename;
+    user.profilePhoto = photoFilename;
+    await user.save();
+
+    console.log(`✅ Foto de perfil atualizada: ${user.email}`);
+
+    res.json({
+      message: 'Foto de perfil atualizada com sucesso',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePhoto: photoFilename,
+      },
+    });
+  } catch (error) {
+    console.error('Error uploading profile photo:', error);
+    
+    // Deletar arquivo se houver erro
+    if (req.file) {
+      const filePath = path.join(__dirname, '../../uploads/profiles', req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    
+    res.status(500).json({ message: 'Erro ao fazer upload da foto' });
+  }
+};
+
+export const deleteProfilePhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    if (!user.profilePhoto) {
+      return res.status(400).json({ message: 'Nenhuma foto de perfil para deletar' });
+    }
+
+    // Deletar arquivo
+    const photoPath = path.join(__dirname, '../../uploads/profiles', user.profilePhoto);
+    if (fs.existsSync(photoPath)) {
+      fs.unlinkSync(photoPath);
+      console.log(`🗑️ Foto deletada: ${user.profilePhoto}`);
+    }
+
+    // Remover do banco
+    user.profilePhoto = undefined;
+    await user.save();
+
+    res.json({
+      message: 'Foto de perfil removida com sucesso',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePhoto: null,
+      },
+    });
+  } catch (error) {
+    console.error('Error deleting profile photo:', error);
+    res.status(500).json({ message: 'Erro ao deletar foto' });
   }
 };

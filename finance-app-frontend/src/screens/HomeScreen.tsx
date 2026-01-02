@@ -24,6 +24,8 @@ import QuickActions from '../components/QuickActions';
 import InsightsSection from '../components/InsightsSection';
 import { useFocusEffect } from '@react-navigation/native';
 import CreditCardsCarousel from '../components/CreditCardsCarousel';
+import { Image } from 'react-native'; 
+import { API_URL } from '../services/api';
 
 export default function HomeScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -121,14 +123,31 @@ export default function HomeScreen({ navigation }: any) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* HEADER */}
       <View style={styles.header}>
-        <View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {getGreeting()}
-          </Text>
-          <Text style={[styles.userName, { color: colors.text }]}>
-            {user?.name?.split(' ')[0] || 'Usuário'}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          {/* FOTO DE PERFIL */}
+          {user?.profilePhoto ? (
+            <Image
+              source={{ uri: `${API_URL.replace('/api', '')}/uploads/profiles/${user.profilePhoto}` }}
+              style={styles.headerAvatar}
+            />
+          ) : (
+            <View style={[styles.headerAvatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.headerAvatarText}>
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            </View>
+          )}
+          
+          <View>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+              {getGreeting()}
+            </Text>
+            <Text style={[styles.userName, { color: colors.text }]}>
+              {user?.name?.split(' ')[0] || 'Usuário'}
+            </Text>
+          </View>
         </View>
+        
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: colors.card }]}
           onPress={() => navigation.navigate('Settings')}
@@ -494,4 +513,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
+  headerAvatar: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+headerAvatarText: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#fff',
+},
+
 });

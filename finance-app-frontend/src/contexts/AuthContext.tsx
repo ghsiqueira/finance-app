@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  profilePhoto?: string | null;
 }
 
 interface AuthContextData {
@@ -14,6 +15,7 @@ interface AuthContextData {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (userData: User) => void; // 🆕 ADICIONAR
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -39,7 +41,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = JSON.parse(storedUser);
         console.log('Loaded user:', userData.email);
         
-        // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
         api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         
         setUser(userData);
@@ -62,11 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Login successful');
       console.log('User ID:', userData.id);
 
-      // 🆕 SALVA NO STORAGE
       await AsyncStorage.setItem('@token', token);
       await AsyncStorage.setItem('@user', JSON.stringify(userData));
 
-      // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       console.log('Token and user saved');
@@ -88,11 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Registration successful');
       console.log('User ID:', userData.id);
 
-      // 🆕 SALVA NO STORAGE
       await AsyncStorage.setItem('@token', token);
       await AsyncStorage.setItem('@user', JSON.stringify(userData));
 
-      // 🆕 CONFIGURA O HEADER IMEDIATAMENTE
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       console.log('Token and user saved + header configured');
@@ -111,7 +108,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.removeItem('@token');
       await AsyncStorage.removeItem('@user');
       
-      // 🆕 REMOVE O HEADER
       delete api.defaults.headers.common['Authorization'];
       
       console.log('Token and user removed');
@@ -123,8 +119,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 🆕 FUNÇÃO PARA ATUALIZAR USUÁRIO
+  const updateUser = async (userData: User) => {
+    try {
+      setUser(userData);
+      await AsyncStorage.setItem('@user', JSON.stringify(userData));
+      console.log('User updated in context and storage');
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

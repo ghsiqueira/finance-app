@@ -53,6 +53,22 @@ export const authAPI = {
     api.post('/auth/reset-password', data),
   deleteAccount: (password: string) => 
     api.delete('/auth/delete-account', { data: { password } }),
+  updateProfile: async (data: { name: string; email: string }) => {
+    return api.put('/auth/profile', data);
+  },
+  changePassword: async (data: { currentPassword: string; newPassword: string }) => {
+    return api.put('/auth/password', data);
+  },
+  uploadProfilePhoto: (formData: FormData) => {
+    return api.post('/auth/profile/photo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  deleteProfilePhoto: () => {
+    return api.delete('/auth/profile/photo');
+  },
 };
 
 export const transactionAPI = {
@@ -198,3 +214,5 @@ export const creditCardAPI = {
   payInvoice: (cardId: string, invoiceMonth: string) => 
     api.post(`/credit-cards/${cardId}/pay-invoice`, { invoiceMonth }),
 };
+
+export { API_URL };
