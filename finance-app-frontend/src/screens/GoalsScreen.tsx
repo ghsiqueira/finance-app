@@ -5,16 +5,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { goalAPI } from '../services/api';
 import { format, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { GoalSkeleton } from '../components/SkeletonLoader';
 
 const ROLE_ICONS = {
   owner: { icon: 'ribbon', color: '#FFD700' },
@@ -142,7 +142,6 @@ export default function GoalsScreen({ navigation }: any) {
     const memberInfo = getMemberInfo(item);
     const isOwner = memberInfo?.role === 'owner';
     const targetPerMember = getTargetPerMember(item);
-
     const progressColor = item.isCompleted 
       ? colors.success 
       : isOverdue 
@@ -274,10 +273,38 @@ export default function GoalsScreen({ navigation }: any) {
     );
   };
 
-  if (loading) {
+  // 🎨 SKELETON LOADING
+  if (loading && goals.length === 0) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Metas</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={[styles.invitesButton, { backgroundColor: colors.warning }]}
+              onPress={() => navigation.navigate('GoalInvites')}
+            >
+              <Ionicons name="mail" size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
+              onPress={() => navigation.navigate('AddGoal')}
+            >
+              <Ionicons name="add" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ScrollView 
+          horizontal 
+          style={styles.goalsScroll}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20 }}
+        >
+          <GoalSkeleton />
+          <GoalSkeleton />
+          <GoalSkeleton />
+        </ScrollView>
       </View>
     );
   }
@@ -312,7 +339,13 @@ export default function GoalsScreen({ navigation }: any) {
         keyExtractor={(item) => item._id}
         renderItem={renderGoal}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor={colors.primary} 
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="flag-outline" size={64} color={colors.border} />
@@ -330,10 +363,6 @@ export default function GoalsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -380,6 +409,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  goalsScroll: {
+    flex: 1,
   },
   list: {
     padding: 20,

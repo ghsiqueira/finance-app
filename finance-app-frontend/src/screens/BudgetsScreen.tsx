@@ -5,15 +5,15 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { budgetAPI } from '../services/api';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { BudgetSkeleton } from '../components/SkeletonLoader';
 
 export default function BudgetsScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -158,10 +158,29 @@ export default function BudgetsScreen({ navigation }: any) {
     );
   };
 
-  if (loading) {
+  // 🎨 SKELETON LOADING
+  if (loading && budgets.length === 0) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Orçamentos</Text>
+          <TouchableOpacity 
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('AddBudget')}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingTop: 20 }}>
+            <BudgetSkeleton />
+            <BudgetSkeleton />
+            <BudgetSkeleton />
+            <BudgetSkeleton />
+            <BudgetSkeleton />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -182,7 +201,13 @@ export default function BudgetsScreen({ navigation }: any) {
         data={budgets}
         keyExtractor={(item) => item._id}
         renderItem={renderBudget}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor={colors.primary} 
+          />
+        }
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -208,10 +233,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -230,6 +251,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  content: {
+    flex: 1,
   },
   listContent: {
     padding: 20,

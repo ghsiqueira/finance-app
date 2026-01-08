@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   RefreshControl,
   Dimensions,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../contexts/ThemeContext';
 import { transactionAPI, categoryAPI, creditCardAPI } from '../services/api';
+import { CardSkeleton } from '../components/SkeletonLoader';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -137,13 +137,41 @@ export default function ReportsScreen() {
     return count;
   };
 
+  // 🎨 SKELETON LOADING
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary, marginTop: 16 }]}>
-          Carregando relatórios...
-        </Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <View>
+            <Text style={[styles.title, { color: colors.text }]}>📊 Relatórios</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Análise financeira completa</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.filterButton}
+            onPress={() => setFilterModalVisible(true)}
+          >
+            <Ionicons name="options" size={24} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <View style={styles.statsGrid}>
+            <CardSkeleton />
+            <CardSkeleton />
+          </View>
+          <View style={styles.statsGrid}>
+            <CardSkeleton />
+            <CardSkeleton />
+          </View>
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </ScrollView>
       </View>
     );
   }
@@ -265,7 +293,6 @@ export default function ReportsScreen() {
             {formatCurrency(reportData.currentMonth.totalIncome)}
           </Text>
         </View>
-
         <View style={[styles.statCard, styles.expenseCard, { backgroundColor: colors.card, borderLeftColor: colors.expense }]}>
           <View style={styles.statIconContainer}>
             <Ionicons name="arrow-up-circle" size={32} color={colors.expense} />
@@ -291,7 +318,6 @@ export default function ReportsScreen() {
             {formatCurrency(reportData.currentMonth.balance)}
           </Text>
         </View>
-
         <View style={[styles.statCard, styles.savingsCard, { backgroundColor: colors.card, borderLeftColor: colors.warning }]}>
           <View style={styles.statIconContainer}>
             <Ionicons name="wallet" size={32} color={colors.warning} />
@@ -337,7 +363,6 @@ export default function ReportsScreen() {
             </View>
           </View>
 
-          {/* Barra de progresso */}
           <View style={styles.creditProgressContainer}>
             <View style={[styles.creditProgressBar, { backgroundColor: colors.border }]}>
               <View 
@@ -359,7 +384,6 @@ export default function ReportsScreen() {
             </Text>
           </View>
 
-          {/* Lista de cartões */}
           <View style={styles.creditCardsList}>
             {creditCardsData.cards.slice(0, 3).map((card: any, index: number) => (
               <View 
@@ -466,7 +490,6 @@ export default function ReportsScreen() {
         </View>
         
         <View style={styles.customBarChart}>
-          {/* Eixo Y */}
           <View style={styles.yAxis}>
             <Text style={[styles.yAxisLabel, { color: colors.textSecondary }]}>{formatCompactCurrency(maxValue)}</Text>
             <Text style={[styles.yAxisLabel, { color: colors.textSecondary }]}>{formatCompactCurrency(maxValue * 0.75)}</Text>
@@ -474,13 +497,10 @@ export default function ReportsScreen() {
             <Text style={[styles.yAxisLabel, { color: colors.textSecondary }]}>{formatCompactCurrency(maxValue * 0.25)}</Text>
             <Text style={[styles.yAxisLabel, { color: colors.textSecondary }]}>0</Text>
           </View>
-
-          {/* Barras */}
           <View style={styles.barsContainer}>
             {reportData.last6Months.map((month: any, index: number) => (
               <View key={index} style={styles.monthColumn}>
                 <View style={styles.barsGroup}>
-                  {/* Barra de Receita */}
                   <View style={styles.barWrapper}>
                     <View
                       style={[
@@ -496,8 +516,6 @@ export default function ReportsScreen() {
                       )}
                     </View>
                   </View>
-
-                  {/* Barra de Despesa */}
                   <View style={styles.barWrapper}>
                     <View
                       style={[
@@ -514,8 +532,6 @@ export default function ReportsScreen() {
                     </View>
                   </View>
                 </View>
-
-                {/* Label do mês */}
                 <Text style={[styles.monthLabel, { color: colors.textSecondary }]}>
                   {month.month.charAt(0).toUpperCase() + month.month.slice(1)}
                 </Text>
@@ -523,7 +539,6 @@ export default function ReportsScreen() {
             ))}
           </View>
         </View>
-
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.income }]} />
@@ -577,7 +592,6 @@ export default function ReportsScreen() {
           />
         </View>
         
-        {/* Tabela de detalhes do saldo - SEM INFINITO */}
         <View style={[styles.balanceDetailsTable, { borderTopColor: colors.border }]}>
           <View style={[styles.tableHeader, { borderBottomColor: colors.primary }]}>
             <Text style={[styles.tableHeaderText, { color: colors.primary }]}>Mês</Text>
@@ -588,18 +602,14 @@ export default function ReportsScreen() {
             const previousBalance = index > 0 ? reportData.last6Months[index - 1].balance : null;
             const growth = previousBalance !== null ? item.balance - previousBalance : 0;
             
-            // 🔧 CÁLCULO CORRETO
             let growthText = '';
             let showGrowth = false;
             
             if (previousBalance !== null) {
-              // Caso: anterior era 0 - NÃO MOSTRAR %
               if (previousBalance === 0) {
-                growthText = ''; // Sem % quando anterior é 0
+                growthText = '';
                 showGrowth = true;
-              }
-              // Caso normal: calcular %
-              else {
+              } else {
                 const growthPercent = (growth / Math.abs(previousBalance)) * 100;
                 growthText = `(${growthPercent >= 0 ? '+' : ''}${growthPercent.toFixed(1)}%)`;
                 showGrowth = true;
@@ -646,7 +656,6 @@ export default function ReportsScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>📈 Análise dos Últimos 6 Meses</Text>
         
         {(() => {
-          // Calcular estatísticas
           const balances = reportData.last6Months.map((m: any) => m.balance);
           const bestMonth = reportData.last6Months.reduce((prev: any, curr: any) => 
             curr.balance > prev.balance ? curr : prev
@@ -656,7 +665,6 @@ export default function ReportsScreen() {
           );
           const avgBalance = balances.reduce((sum: number, val: number) => sum + val, 0) / balances.length;
           
-          // Calcular tendência (últimos 3 meses vs primeiros 3 meses)
           const firstHalf = balances.slice(0, 3).reduce((sum: number, val: number) => sum + val, 0) / 3;
           const secondHalf = balances.slice(3, 6).reduce((sum: number, val: number) => sum + val, 0) / 3;
           const trend = secondHalf - firstHalf;
@@ -691,7 +699,6 @@ export default function ReportsScreen() {
                   </Text>
                 </View>
               </View>
-
               <View style={[styles.avgBalanceContainer, { backgroundColor: colors.background }]}>
                 <Ionicons name="calculator" size={20} color={colors.primary} />
                 <View style={styles.avgBalanceInfo}>
@@ -703,7 +710,6 @@ export default function ReportsScreen() {
                   </Text>
                 </View>
               </View>
-
               <View style={[styles.trendContainer, { 
                 backgroundColor: trend >= 0 ? colors.success + '15' : colors.error + '15',
                 borderLeftColor: trend >= 0 ? colors.success : colors.error
@@ -729,7 +735,6 @@ export default function ReportsScreen() {
 
       {/* 🎯 PREVISÃO DO PRÓXIMO MÊS */}
       {(() => {
-        // Calcular previsão simples (média dos últimos 3 meses)
         const lastThreeBalances = reportData.last6Months.slice(-3).map((m: any) => m.balance);
         const avgLastThree = lastThreeBalances.reduce((sum: number, val: number) => sum + val, 0) / 3;
         
@@ -815,7 +820,6 @@ export default function ReportsScreen() {
                 <Ionicons name="close" size={28} color={colors.text} />
               </TouchableOpacity>
             </View>
-
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={[styles.filterLabel, { color: colors.text }]}>Período</Text>
               <View style={styles.filterOptions}>
@@ -911,9 +915,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '500',
+  scrollContent: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -1313,7 +1316,6 @@ const styles = StyleSheet.create({
   growthPercent: {
     fontSize: 11,
   },
-  // 🆕 NOVOS ESTILOS
   advancedStatsCard: {
     marginHorizontal: 20,
     marginBottom: 20,

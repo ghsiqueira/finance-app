@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { creditCardAPI } from '../services/api';
+import { CreditCardSkeleton } from '../components/SkeletonLoader';
 
 export default function CreditCardsScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -66,7 +66,8 @@ export default function CreditCardsScreen({ navigation }: any) {
     return icons[brand] || 'card-outline';
   };
 
-  if (loading) {
+  // 🎨 SKELETON LOADING
+  if (loading && cards.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -75,9 +76,33 @@ export default function CreditCardsScreen({ navigation }: any) {
             <Ionicons name="add-circle" size={32} color={colors.primary} />
           </TouchableOpacity>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={[styles.dashboardCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.dashboardTitle, { color: colors.text }]}>Resumo Geral</Text>
+            <View style={styles.dashboardRow}>
+              <View style={styles.dashboardItem}>
+                <Text style={[styles.dashboardLabel, { color: colors.textSecondary }]}>Limite Total</Text>
+                <Text style={[styles.dashboardValue, { color: colors.text }]}>...</Text>
+              </View>
+              <View style={styles.dashboardItem}>
+                <Text style={[styles.dashboardLabel, { color: colors.textSecondary }]}>Usado</Text>
+                <Text style={[styles.dashboardValue, { color: colors.error }]}>...</Text>
+              </View>
+              <View style={styles.dashboardItem}>
+                <Text style={[styles.dashboardLabel, { color: colors.textSecondary }]}>Disponível</Text>
+                <Text style={[styles.dashboardValue, { color: colors.success }]}>...</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.cardsSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Meus Cartões</Text>
+            <CreditCardSkeleton />
+            <CreditCardSkeleton />
+            <CreditCardSkeleton />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -112,7 +137,6 @@ export default function CreditCardsScreen({ navigation }: any) {
                   {formatCurrency(dashboard.totalLimit)}
                 </Text>
               </View>
-
               <View style={styles.dashboardItem}>
                 <Text style={[styles.dashboardLabel, { color: colors.textSecondary }]}>
                   Usado
@@ -121,7 +145,6 @@ export default function CreditCardsScreen({ navigation }: any) {
                   {formatCurrency(dashboard.totalUsed)}
                 </Text>
               </View>
-
               <View style={styles.dashboardItem}>
                 <Text style={[styles.dashboardLabel, { color: colors.textSecondary }]}>
                   Disponível
@@ -162,7 +185,6 @@ export default function CreditCardsScreen({ navigation }: any) {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Meus Cartões
           </Text>
-
           {cards.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="card-outline" size={64} color={colors.textSecondary} />
@@ -202,7 +224,6 @@ export default function CreditCardsScreen({ navigation }: any) {
                     <Text style={styles.cardDigits}>•••• {card.lastFourDigits}</Text>
                   )}
                 </View>
-
                 <View style={styles.cardBody}>
                   <View style={styles.cardLimits}>
                     <View>
@@ -218,7 +239,6 @@ export default function CreditCardsScreen({ navigation }: any) {
                       </Text>
                     </View>
                   </View>
-
                   {/* BARRA DE USO */}
                   <View style={styles.cardProgress}>
                     <View style={styles.cardProgressBar}>
@@ -234,7 +254,6 @@ export default function CreditCardsScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-
                 <View style={styles.cardFooter}>
                   <Text style={styles.cardFooterText}>
                     Fecha dia {card.closingDay} • Vence dia {card.dueDay}
@@ -244,7 +263,6 @@ export default function CreditCardsScreen({ navigation }: any) {
             ))
           )}
         </View>
-
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
@@ -262,7 +280,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontSize: 28, fontWeight: 'bold' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
   // Dashboard
   dashboardCard: {

@@ -26,6 +26,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import CreditCardsCarousel from '../components/CreditCardsCarousel';
 import { Image } from 'react-native'; 
 import { API_URL } from '../services/api';
+import { 
+  TransactionSkeleton, 
+  CardSkeleton, 
+  MonthlySummarySkeleton 
+} from '../components/SkeletonLoader';
 
 export default function HomeScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -93,14 +98,20 @@ export default function HomeScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* HEADER */}
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              {getGreeting()}
-            </Text>
-            <Text style={[styles.userName, { color: colors.text }]}>
-              {user?.name?.split(' ')[0] || 'Usuário'}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={[styles.headerAvatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.headerAvatarText}>U</Text>
+            </View>
+            <View>
+              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                {getGreeting()}
+              </Text>
+              <Text style={[styles.userName, { color: colors.text }]}>
+                Carregando...
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={[styles.settingsButton, { backgroundColor: colors.card }]}
@@ -109,12 +120,33 @@ export default function HomeScreen({ navigation }: any) {
             <Ionicons name="settings-outline" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Carregando...
-          </Text>
-        </View>
+
+        {/* SKELETON LOADING */}
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.section}>
+            <MonthlySummarySkeleton />
+          </View>
+
+          <View style={styles.section}>
+            <CardSkeleton />
+          </View>
+
+          <View style={styles.section}>
+            <CardSkeleton />
+          </View>
+
+          <View style={{ paddingTop: 8 }}>
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+          </View>
+        </ScrollView>
       </View>
     );
   }

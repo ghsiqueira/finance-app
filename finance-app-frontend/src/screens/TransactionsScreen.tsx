@@ -5,8 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,6 +14,7 @@ import { transactionAPI, categoryAPI } from '../services/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { format, parseISO, isSameDay, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { TransactionSkeleton } from '../components/SkeletonLoader';
 import TransactionFiltersModal from '../components/TransactionFiltersModal';
 import FilterChips from '../components/FilterChips';
 import FilterStats from '../components/FilterStats';
@@ -44,7 +45,7 @@ export default function TransactionsScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [exportModalVisible, setExportModalVisible] = useState(false);
-
+  
   const [filters, setFilters] = useState<Filters>({
     type: 'all',
     categoryIds: [],
@@ -150,6 +151,7 @@ export default function TransactionsScreen({ navigation }: any) {
         result = result.filter(t => t.amount >= min);
       }
     }
+
     if (currentFilters.maxAmount) {
       const max = parseFloat(currentFilters.maxAmount);
       if (!isNaN(max)) {
@@ -320,7 +322,6 @@ export default function TransactionsScreen({ navigation }: any) {
               color={item.categoryId?.color || colors.textSecondary}
             />
           </View>
-
           <View style={styles.transactionInfo}>
             <View style={styles.transactionHeader}>
               <Text style={[styles.transactionDescription, { color: colors.text }]} numberOfLines={1}>
@@ -351,7 +352,6 @@ export default function TransactionsScreen({ navigation }: any) {
             </View>
           </View>
         </View>
-
         <View style={styles.transactionRight}>
           <Text style={[styles.transactionAmount, { color: amountColor }]}>
             {isIncome ? '+' : '-'}{formatCurrency(item.amount)}
@@ -388,7 +388,8 @@ export default function TransactionsScreen({ navigation }: any) {
     );
   };
 
-  if (loading) {
+  // 🎨 SKELETON LOADING
+  if (loading && transactions.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -397,9 +398,19 @@ export default function TransactionsScreen({ navigation }: any) {
             <Ionicons name="add-circle" size={32} color={colors.primary} />
           </TouchableOpacity>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={{ marginTop: 80 }}>
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -571,10 +582,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
   },
-  loadingContainer: {
+  content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',

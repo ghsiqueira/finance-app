@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { billAPI } from '../services/api';
+import { BillSkeleton } from '../components/SkeletonLoader';
 
 export default function BillsScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -101,7 +101,8 @@ export default function BillsScreen({ navigation }: any) {
     paid: bills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.amount, 0),
   };
 
-  if (loading) {
+  // 🎨 SKELETON LOADING
+  if (loading && bills.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -110,9 +111,30 @@ export default function BillsScreen({ navigation }: any) {
             <Ionicons name="add-circle" size={32} color={colors.primary} />
           </TouchableOpacity>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pendente</Text>
+            <Text style={[styles.statValue, { color: colors.warning }]}>...</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Atrasada</Text>
+            <Text style={[styles.statValue, { color: colors.error }]}>...</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pagas</Text>
+            <Text style={[styles.statValue, { color: colors.success }]}>...</Text>
+          </View>
         </View>
+
+        <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+          <BillSkeleton />
+          <BillSkeleton />
+          <BillSkeleton />
+          <BillSkeleton />
+          <BillSkeleton />
+          <BillSkeleton />
+        </ScrollView>
       </View>
     );
   }
@@ -243,7 +265,6 @@ export default function BillsScreen({ navigation }: any) {
                     </View>
                   </View>
                 </View>
-
                 {bill.status !== 'paid' && (
                   <TouchableOpacity
                     style={[styles.payButton, { backgroundColor: colors.success }]}
@@ -260,7 +281,6 @@ export default function BillsScreen({ navigation }: any) {
             ))
           )}
         </View>
-
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
@@ -278,7 +298,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontSize: 28, fontWeight: 'bold' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   statsContainer: { flexDirection: 'row', padding: 20, gap: 12 },
   statCard: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center' },
   statLabel: { fontSize: 12, marginBottom: 4 },
