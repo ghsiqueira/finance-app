@@ -140,7 +140,7 @@ export default function AddGoalScreen({ navigation }: any) {
         <TextInput
           style={[styles.input, { 
             borderColor: colors.border,
-            backgroundColor: colors.inputBackground,
+            backgroundColor: colors.card,
             color: colors.text
           }]}
           placeholder="Ex: Viagem para Europa, Carro Novo..."
@@ -153,7 +153,7 @@ export default function AddGoalScreen({ navigation }: any) {
         <TextInput
           style={[styles.amountInput, { 
             borderColor: colors.border,
-            backgroundColor: colors.inputBackground,
+            backgroundColor: colors.card,
             color: colors.text
           }]}
           placeholder="R$ 0,00"
@@ -167,7 +167,7 @@ export default function AddGoalScreen({ navigation }: any) {
         <TouchableOpacity 
           style={[styles.dateButton, { 
             borderColor: colors.border,
-            backgroundColor: colors.inputBackground
+            backgroundColor: colors.card
           }]}
           onPress={() => setShowDeadlinePicker(true)}
         >

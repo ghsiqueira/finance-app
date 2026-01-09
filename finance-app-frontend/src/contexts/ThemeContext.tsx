@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useColorScheme, Appearance } from 'react-native';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
+type ThemeMode = 'light' | 'dark';
 
 type ColorScheme = {
   primary: string;
@@ -20,9 +19,9 @@ type ColorScheme = {
   disabled: string;
   shadow: string;
   overlay: string;
-  income: string;        // 🆕 ADICIONAR
-  expense: string;       // 🆕 ADICIONAR
-  modalOverlay: string;  // 🆕 ADICIONAR
+  income: string;
+  expense: string;
+  modalOverlay: string;
 };
 
 const lightColors: ColorScheme = {
@@ -41,9 +40,9 @@ const lightColors: ColorScheme = {
   disabled: '#D1D1D6',
   shadow: 'rgba(0, 0, 0, 0.1)',
   overlay: 'rgba(0, 0, 0, 0.5)',
-  income: '#34C759',        // 🆕 Verde para receitas
-  expense: '#FF3B30',       // 🆕 Vermelho para despesas
-  modalOverlay: 'rgba(0, 0, 0, 0.5)', // 🆕 Overlay de modais
+  income: '#34C759',
+  expense: '#FF3B30',
+  modalOverlay: 'rgba(0, 0, 0, 0.5)',
 };
 
 const darkColors: ColorScheme = {
@@ -62,9 +61,9 @@ const darkColors: ColorScheme = {
   disabled: '#48484A',
   shadow: 'rgba(0, 0, 0, 0.3)',
   overlay: 'rgba(0, 0, 0, 0.7)',
-  income: '#5DD97C',        // 🆕 Verde claro para receitas
-  expense: '#FF6961',       // 🆕 Vermelho claro para despesas
-  modalOverlay: 'rgba(0, 0, 0, 0.7)', // 🆕 Overlay de modais
+  income: '#5DD97C',
+  expense: '#FF6961',
+  modalOverlay: 'rgba(0, 0, 0, 0.7)',
 };
 
 interface ThemeContextData {
@@ -82,7 +81,6 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const systemColorScheme = useColorScheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const [isDark, setIsDark] = useState(false);
 
@@ -91,40 +89,18 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, []);
 
   useEffect(() => {
-    updateTheme();
-  }, [themeMode, systemColorScheme]);
-
-  useEffect(() => {
-    if (themeMode === 'auto') {
-      const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-        console.log('🎨 Sistema mudou para:', colorScheme);
-        setIsDark(colorScheme === 'dark');
-      });
-
-      return () => subscription.remove();
-    }
+    setIsDark(themeMode === 'dark');
   }, [themeMode]);
 
   const loadThemePreference = async () => {
     try {
       const saved = await AsyncStorage.getItem('@theme_mode');
-      if (saved) {
-        setThemeModeState(saved as ThemeMode);
+      if (saved === 'light' || saved === 'dark') {
+        setThemeModeState(saved);
         console.log('🎨 Tema carregado:', saved);
       }
     } catch (error) {
       console.error('Error loading theme preference:', error);
-    }
-  };
-
-  const updateTheme = () => {
-    if (themeMode === 'auto') {
-      const newIsDark = systemColorScheme === 'dark';
-      console.log('🎨 Modo auto - Sistema:', systemColorScheme, '→ isDark:', newIsDark);
-      setIsDark(newIsDark);
-    } else {
-      console.log('🎨 Modo manual:', themeMode);
-      setIsDark(themeMode === 'dark');
     }
   };
 

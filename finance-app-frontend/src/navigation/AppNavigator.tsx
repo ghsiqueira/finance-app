@@ -1,9 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+
 import HomeScreen from '../screens/HomeScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import BudgetsScreen from '../screens/BudgetsScreen';
@@ -36,7 +37,7 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// 🏠 HOME STACK - Inclui TUDO agora!
+// 🏠 HOME STACK
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -59,7 +60,7 @@ function HomeStack() {
       <Stack.Screen name="ShareGoal" component={ShareGoalScreen} />
       <Stack.Screen name="GoalInvites" component={GoalInvitesScreen} />
       
-      {/* Contas/Bills */}
+      {/* Contas */}
       <Stack.Screen name="BillsMain" component={BillsScreen} />
       <Stack.Screen name="AddBill" component={AddBillScreen} />
       
@@ -133,14 +134,14 @@ function SettingsStack() {
 
 export default function AppNavigator() {
   const { colors } = useTheme();
-
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any;
-
+          
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Transactions') {
@@ -150,7 +151,7 @@ export default function AppNavigator() {
           } else if (route.name === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
           }
-
+          
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
@@ -158,8 +159,8 @@ export default function AppNavigator() {
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 8,
+          height: Platform.OS === 'ios' ? 88 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
@@ -168,7 +169,6 @@ export default function AppNavigator() {
         },
       })}
     >
-      {/* ✅ APENAS 4 TABS */}
       <Tab.Screen 
         name="Home" 
         component={HomeStack}

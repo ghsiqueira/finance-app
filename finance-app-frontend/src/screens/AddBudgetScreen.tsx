@@ -139,7 +139,7 @@ export default function AddBudgetScreen({ navigation }: any) {
         <TextInput
           style={[styles.input, { 
             borderColor: colors.border,
-            backgroundColor: colors.inputBackground,
+            backgroundColor: colors.card,
             color: colors.text
           }]}
           placeholder="Ex: Alimentação, Lazer..."
@@ -152,7 +152,7 @@ export default function AddBudgetScreen({ navigation }: any) {
         <TextInput
           style={[styles.amountInput, { 
             borderColor: colors.border,
-            backgroundColor: colors.inputBackground,
+            backgroundColor: colors.card,
             color: colors.text
           }]}
           placeholder="R$ 0,00"
@@ -195,7 +195,7 @@ export default function AddBudgetScreen({ navigation }: any) {
           <TouchableOpacity 
             style={[styles.dateButton, { 
               borderColor: colors.border,
-              backgroundColor: colors.inputBackground
+              backgroundColor: colors.card
             }]}
             onPress={() => setShowEndDatePicker(true)}
           >
@@ -224,7 +224,7 @@ export default function AddBudgetScreen({ navigation }: any) {
           <TextInput
             style={[styles.input, { 
               borderColor: colors.border,
-              backgroundColor: colors.inputBackground,
+              backgroundColor: colors.card,
               color: colors.text
             }]}
             placeholder="Ex: 1, 15, 28..."

@@ -34,7 +34,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'>('monthly');
   const [dayOfMonth, setDayOfMonth] = useState(date.getDate().toString());
@@ -180,7 +180,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.label, { color: colors.text }]}>Tipo</Text>
         <View style={styles.typeContainer}>
           <TouchableOpacity
@@ -508,6 +508,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
                       Sem orçamento
                     </Text>
                   </TouchableOpacity>
+
                   {filteredBudgets.map((budget) => (
                     <TouchableOpacity
                       key={budget._id}
@@ -550,7 +551,10 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         onRequestClose={() => setShowFrequencyModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, height: 'auto', maxHeight: '50%' }]}>
+          <View style={[
+            styles.frequencyModalContent, 
+            { backgroundColor: colors.card }
+          ]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Frequência</Text>
               <TouchableOpacity onPress={() => setShowFrequencyModal(false)}>
@@ -558,28 +562,49 @@ export default function AddTransactionScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView 
+              style={styles.modalScroll}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
               {[
-                { value: 'daily', label: 'Diariamente' },
-                { value: 'weekly', label: 'Semanalmente' },
-                { value: 'biweekly', label: 'Quinzenalmente' },
-                { value: 'monthly', label: 'Mensalmente' },
-                { value: 'yearly', label: 'Anualmente' },
+                { value: 'daily', label: 'Diariamente', icon: 'today' },
+                { value: 'weekly', label: 'Semanalmente', icon: 'calendar' },
+                { value: 'biweekly', label: 'Quinzenalmente', icon: 'calendar-outline' },
+                { value: 'monthly', label: 'Mensalmente', icon: 'calendar-number' },
+                { value: 'yearly', label: 'Anualmente', icon: 'calendar-sharp' },
               ].map((freq) => (
                 <TouchableOpacity
                   key={freq.value}
-                  style={[styles.categoryOption, { borderBottomColor: colors.border }]}
+                  style={[
+                    styles.frequencyOption,
+                    { borderBottomColor: colors.border },
+                    frequency === freq.value && { backgroundColor: colors.primary + '10' }
+                  ]}
                   onPress={() => {
                     setFrequency(freq.value as any);
                     setShowFrequencyModal(false);
                   }}
                 >
-                  <Ionicons name="repeat" size={24} color={colors.primary} />
-                  <Text style={[styles.categoryOptionText, { color: colors.text }]}>
+                  <View style={[
+                    styles.frequencyIconContainer,
+                    { backgroundColor: frequency === freq.value ? colors.primary + '20' : colors.background }
+                  ]}>
+                    <Ionicons 
+                      name={freq.icon as any} 
+                      size={24} 
+                      color={frequency === freq.value ? colors.primary : colors.textSecondary} 
+                    />
+                  </View>
+                  <Text style={[
+                    styles.frequencyOptionText, 
+                    { color: colors.text },
+                    frequency === freq.value && { fontWeight: '700' }
+                  ]}>
                     {freq.label}
                   </Text>
                   {frequency === freq.value && (
-                    <Ionicons name="checkmark" size={24} color={colors.primary} />
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -741,11 +766,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
+  frequencyModalContent: {
+    minHeight: 450,
+    maxHeight: '65%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
   },
   modalTitle: {
@@ -783,6 +816,26 @@ const styles = StyleSheet.create({
   budgetLimitText: {
     fontSize: 12,
     marginTop: 2,
+  },
+  frequencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    padding: 18,
+    borderBottomWidth: 1,
+    marginHorizontal: 12,
+  },
+  frequencyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  frequencyOptionText: {
+    fontSize: 17,
+    fontWeight: '600',
+    flex: 1,
   },
   emptyCategories: {
     alignItems: 'center',

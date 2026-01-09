@@ -92,36 +92,48 @@ export default function BudgetsScreen({ navigation }: any) {
         style={[styles.budgetCard, { backgroundColor: colors.card }]}
         onPress={() => navigation.navigate('EditBudget', { budget: item })}
         onLongPress={() => handleDeleteBudget(item._id, item.name)}
+        activeOpacity={0.7}
       >
         <View style={styles.budgetHeader}>
-          <View style={styles.budgetInfo}>
-            <View style={[styles.categoryIcon, { backgroundColor: item.categoryId?.color }]}>
+          <View style={styles.categoryIcon}>
+            <View style={[styles.categoryIconInner, { backgroundColor: item.categoryId?.color || colors.primary }]}>
               <Ionicons name={item.categoryId?.icon || 'help'} size={24} color="#fff" />
             </View>
-            <View style={styles.budgetText}>
-              <Text style={[styles.budgetName, { color: colors.text }]}>{item.name}</Text>
-              <Text style={[styles.budgetCategory, { color: colors.textSecondary }]}>{item.categoryId?.name}</Text>
-            </View>
           </View>
-          <Ionicons name={getStatusIcon(item.percentage)} size={24} color={statusColor} />
+          
+          <View style={styles.budgetText}>
+            <Text style={[styles.budgetName, { color: colors.text }]} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={[styles.budgetCategory, { color: colors.textSecondary }]} numberOfLines={1}>
+              {item.categoryId?.name}
+            </Text>
+          </View>
+          
+          {/* ✅ ÍCONE DE STATUS - Logo após o texto */}
+          <View style={styles.statusIconContainer}>
+            <Ionicons name={getStatusIcon(item.percentage)} size={24} color={statusColor} />
+          </View>
         </View>
 
         <View style={styles.budgetAmounts}>
           <View style={styles.amountBox}>
             <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Gasto</Text>
-            <Text style={[styles.amountValue, { color: statusColor }]}>
+            <Text style={[styles.amountValue, { color: statusColor }]} numberOfLines={1}>
               {formatCurrency(item.spent || 0)}
             </Text>
           </View>
           <View style={[styles.amountDivider, { backgroundColor: colors.border }]} />
           <View style={styles.amountBox}>
             <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Orçamento</Text>
-            <Text style={[styles.amountValue, { color: colors.text }]}>{formatCurrency(item.amount)}</Text>
+            <Text style={[styles.amountValue, { color: colors.text }]} numberOfLines={1}>
+              {formatCurrency(item.amount)}
+            </Text>
           </View>
           <View style={[styles.amountDivider, { backgroundColor: colors.border }]} />
           <View style={styles.amountBox}>
             <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Restante</Text>
-            <Text style={[styles.amountValue, { color: item.remaining >= 0 ? colors.success : colors.error }]}>
+            <Text style={[styles.amountValue, { color: item.remaining >= 0 ? colors.success : colors.error }]} numberOfLines={1}>
               {formatCurrency(item.remaining || 0)}
             </Text>
           </View>
@@ -136,7 +148,9 @@ export default function BudgetsScreen({ navigation }: any) {
               ]}
             />
           </View>
-          <Text style={[styles.progressText, { color: colors.textSecondary }]}>{item.percentage.toFixed(0)}%</Text>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
+            {item.percentage.toFixed(0)}%
+          </Text>
         </View>
 
         {item.dailyAverage > 0 && (
@@ -205,14 +219,18 @@ export default function BudgetsScreen({ navigation }: any) {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            tintColor={colors.primary} 
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="wallet-outline" size={64} color={colors.border} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Nenhum orçamento criado</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              Nenhum orçamento criado
+            </Text>
             <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
               Crie orçamentos para controlar seus gastos
             </Text>
@@ -257,37 +275,40 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   budgetCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
+    overflow: 'hidden',
   },
   budgetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  budgetInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
   },
   categoryIcon: {
     width: 48,
     height: 48,
+  },
+  categoryIconInner: {
+    width: 48,
+    height: 48,
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   budgetText: {
     flex: 1,
+    minWidth: 0,
   },
   budgetName: {
     fontSize: 18,
@@ -297,25 +318,37 @@ const styles = StyleSheet.create({
   budgetCategory: {
     fontSize: 14,
   },
+  statusIconContainer: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   budgetAmounts: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 4,
   },
   amountBox: {
     flex: 1,
     alignItems: 'center',
+    minWidth: 0,
   },
   amountLabel: {
     fontSize: 12,
     marginBottom: 4,
+    fontWeight: '500',
   },
   amountValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
   },
   amountDivider: {
     width: 1,
+    height: 32,
+    marginHorizontal: 8,
   },
   progressBarContainer: {
     flexDirection: 'row',
@@ -332,6 +365,7 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 4,
+    minWidth: 2,
   },
   progressText: {
     fontSize: 14,
@@ -342,10 +376,10 @@ const styles = StyleSheet.create({
   dailyAverageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   dailyAverageText: {
     flex: 1,
@@ -359,16 +393,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
   },
   renewalText: {
     fontSize: 12,
+    fontWeight: '500',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
   emptyText: {
     fontSize: 18,
@@ -381,9 +417,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
     marginTop: 24,
   },
   emptyButtonText: {

@@ -9,7 +9,6 @@ export default function ThemeSelector() {
   const options = [
     { value: 'light', label: 'Claro', icon: 'sunny' },
     { value: 'dark', label: 'Escuro', icon: 'moon' },
-    { value: 'auto', label: 'Auto', icon: 'phone-portrait' },
   ] as const;
 
   return (
@@ -22,7 +21,7 @@ export default function ThemeSelector() {
           <View>
             <Text style={[styles.title, { color: colors.text }]}>Tema do App</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              {themeMode === 'auto' ? 'Automático' : isDark ? 'Escuro' : 'Claro'}
+              {isDark ? 'Tema escuro ativado' : 'Tema claro ativado'}
             </Text>
           </View>
         </View>
@@ -42,10 +41,11 @@ export default function ThemeSelector() {
                 },
               ]}
               onPress={() => setThemeMode(option.value)}
+              activeOpacity={0.7}
             >
               <Ionicons
                 name={option.icon}
-                size={20}
+                size={24}
                 color={isSelected ? '#fff' : colors.textSecondary}
               />
               <Text
@@ -104,21 +104,21 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   option: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    borderWidth: 1.5,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 2,
   },
   optionText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
