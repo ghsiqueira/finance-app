@@ -39,6 +39,8 @@ export default function AddTransactionScreen({ route, navigation }: any) {
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'>('monthly');
   const [dayOfMonth, setDayOfMonth] = useState(date.getDate().toString());
   const [showFrequencyModal, setShowFrequencyModal] = useState(false);
+  
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     loadData();
@@ -117,6 +119,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
         type,
         date: date.toISOString(),
         isRecurring,
+        notes: notes.trim(), 
       };
 
       if (categoryId) {
@@ -335,6 +338,32 @@ export default function AddTransactionScreen({ route, navigation }: any) {
             </TouchableOpacity>
           </>
         )}
+
+        {/* ✅ CAMPO DE NOTAS ADICIONADO */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Observações (Opcional)
+        </Text>
+        <TextInput
+          style={[
+            styles.notesInput, 
+            { 
+              backgroundColor: colors.card, 
+              color: colors.text, 
+              borderColor: colors.border 
+            }
+          ]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Ex: Presente de aniversário, despesa de trabalho..."
+          placeholderTextColor={colors.placeholder}
+          multiline
+          numberOfLines={3}
+          maxLength={500}
+          textAlignVertical="top"
+        />
+        <Text style={[styles.charCount, { color: colors.textSecondary }]}>
+          {notes.length}/500 caracteres
+        </Text>
 
         <View style={styles.recurrenceContainer}>
           <View style={styles.recurrenceHeader}>
@@ -712,6 +741,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notesInput: {
+    fontSize: 15,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 100,
+    maxHeight: 150,
+  },
+  charCount: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'right',
   },
   recurrenceContainer: {
     marginTop: 24,

@@ -27,6 +27,7 @@ export default function TransactionDetailsScreen({ route, navigation }: any) {
       navigation.goBack();
       return;
     }
+
     loadTransaction();
   }, [transactionId]);
 
@@ -242,6 +243,23 @@ export default function TransactionDetailsScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
+
+          {/* NOTAS - DEPOIS de "Criado em" */}
+          {transaction.notes && transaction.notes.trim() && (
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabel}>
+                <Ionicons name="document-text" size={20} color={colors.info} />
+                <Text style={[styles.detailLabelText, { color: colors.textSecondary }]}>
+                  Observações
+                </Text>
+              </View>
+              <View style={[styles.notesBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <Text style={[styles.notesText, { color: colors.text }]}>
+                  {transaction.notes}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* BOTÕES DE AÇÃO */}
@@ -370,6 +388,17 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notesBox: {
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 60,
+  },
+  notesText: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   actionsContainer: {
     flexDirection: 'row',

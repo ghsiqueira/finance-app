@@ -19,6 +19,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       currency,
       description, 
       date, 
+      notes,
       isRecurring, 
       recurringConfig, 
       location,
@@ -79,6 +80,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       currency: currency || 'BRL',
       description,
       date: date || new Date(),
+      notes: notes || '',
       isRecurring: isRecurring || false,
       location,
       receipt
@@ -240,6 +242,7 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
       type,
       categoryId,
       budgetId,
+      notes,
       recurringConfig,
       location,
       receipt
@@ -295,6 +298,7 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
     if (type !== undefined) transaction.type = type;
     if (categoryId !== undefined) transaction.categoryId = categoryId;
     if (budgetId !== undefined) transaction.budgetId = budgetId;
+    if (notes !== undefined) transaction.notes = notes;
     if (location !== undefined) transaction.location = location;
     if (receipt !== undefined) transaction.receipt = receipt;
 

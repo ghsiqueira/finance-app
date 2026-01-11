@@ -10,6 +10,7 @@ export interface ITransaction extends Document {
   currency?: string;
   description: string;
   date: Date;
+  notes?: string; 
   isRecurring: boolean;
   recurringConfig?: {
     frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
@@ -64,6 +65,13 @@ const TransactionSchema = new Schema({
     type: String, 
     required: true,
     trim: true 
+  },
+  notes: {
+    type: String,
+    required: false,
+    default: '',
+    trim: true,
+    maxlength: 500
   },
   date: { 
     type: Date, 

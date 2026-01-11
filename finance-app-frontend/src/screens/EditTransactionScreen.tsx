@@ -35,6 +35,8 @@ export default function EditTransactionScreen({ route, navigation }: any) {
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [hasRecurrence, setHasRecurrence] = useState(!!transaction?.recurringConfig?.frequency);
   const [recurringConfig, setRecurringConfig] = useState(transaction?.recurringConfig || null);
+  
+  const [notes, setNotes] = useState(transaction?.notes || '');
 
   useEffect(() => {
     if (!transaction) {
@@ -42,6 +44,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
       navigation.goBack();
       return;
     }
+
     loadCategories();
   }, []);
 
@@ -137,13 +140,16 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
     try {
       setLoading(true);
+
       await transactionAPI.update(transaction._id, {
         description: description.trim(),
         amount: parsedAmount,
         type,
         date: date.toISOString(),
         categoryId: categoryId || undefined,
+        notes: notes.trim(), 
       });
+
       Alert.alert('Sucesso', 'Transação atualizada!', [
         {
           text: 'OK',
@@ -340,6 +346,32 @@ export default function EditTransactionScreen({ route, navigation }: any) {
             </Text>
           </View>
         )}
+
+        {/* ✅ CAMPO DE NOTAS ADICIONADO */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Observações (Opcional)
+        </Text>
+        <TextInput
+          style={[
+            styles.notesInput, 
+            { 
+              backgroundColor: colors.card, 
+              color: colors.text, 
+              borderColor: colors.border 
+            }
+          ]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Ex: Presente de aniversário, despesa de trabalho..."
+          placeholderTextColor={colors.placeholder}
+          multiline
+          numberOfLines={3}
+          maxLength={500}
+          textAlignVertical="top"
+        />
+        <Text style={[styles.charCount, { color: colors.textSecondary }]}>
+          {notes.length}/500 caracteres
+        </Text>
 
         {/* 🆕 SEÇÃO DE RECORRÊNCIA */}
         {hasRecurrence && recurringConfig && (
@@ -593,6 +625,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  notesInput: {
+    fontSize: 15,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 100,
+    maxHeight: 150,
+  },
+  charCount: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'right',
   },
   recurrenceCard: {
     flexDirection: 'row',
